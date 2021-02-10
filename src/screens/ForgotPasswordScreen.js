@@ -37,7 +37,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
     <Background>
       <BackButton goBack={navigation.goBack} />
       <Logo />
-      <Header>Şifre Sfırlama</Header>
+      <Header>Şifre Sıfırlama</Header>
       <TextInput
         label="E-mail adresi"
         returnKeyType="done"
@@ -49,7 +49,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
         autoCompleteType="email"
         textContentType="emailAddress"
         keyboardType="email-address"
-        description="You will receive email with password reset link."
+        description="Şifre sıfırlama bağlantısı içeren mail alacaksınız"
       />
       <Button
         loading={loading}

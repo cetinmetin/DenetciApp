@@ -72,7 +72,7 @@ const LoginScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
       <Button loading={loading} mode="contained" onPress={onLoginPressed}>
-        Login
+        Giriş Yap
       </Button>
       <View style={styles.row}>
         <Text>Hesabın yok mu? </Text>
