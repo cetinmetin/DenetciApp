@@ -17,7 +17,6 @@ const AdminDashboard = () => {
   const [data, setData] = React.useState({
     questions: [],
     forms: [],
-    newQuestions: [],
     answerMethods: [],
   })
 
@@ -32,7 +31,7 @@ const AdminDashboard = () => {
       data.questions.map(data => setData(previousData => ({ ...previousData, questions: previousData.questions.concat(data) })))
       data.answerMethods.map(data => setData(previousData => ({ ...previousData, answerMethods: previousData.answerMethods.concat(data) })))
       if (data.questions.length != data.forms.length) {
-        CallFormCreater()
+        CallCreateQuestionForm()
       }
     } catch (e) {
       alert("Sorular Alınırken Hata Oluştu - " + e)
@@ -52,7 +51,6 @@ const AdminDashboard = () => {
             text: data.answerMethods[i].text,
             photo: data.answerMethods[i].photo
           });
-        // console.log(data.questions[i])
       }
       getQuestions()
     } catch (e) {
@@ -65,6 +63,26 @@ const AdminDashboard = () => {
       ...data,
       questions: data.questions
     })
+  }
+  function addQuestion() {
+    data.answerMethods.push({ text: false, photo: false })
+    data.questions.push('')
+    setData({
+      ...data,
+      questions: data.questions,
+      answerMethods: data.answerMethods
+    })
+    CreateQuestionForm()
+  }
+  function deleteQuestion(index) {
+    data.answerMethods.splice(index, 1)
+    data.questions.splice(index, 1)
+    setData({
+      ...data,
+      questions: data.questions,
+      answerMethods: data.answerMethods
+    })
+    CreateQuestionForm()
   }
   function QuestionForm(index) {
     return (
@@ -80,6 +98,9 @@ const AdminDashboard = () => {
             //value={data.questions[index]}
             onChangeText={(text) => questionInputChange(text, index)}
           />
+          <Button mode="outlined" onPress={() => deleteQuestion(index)}>
+            Soruyu Sil
+          </Button>
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             <View>
               <Text>Cevap Seçeneği:</Text>
@@ -119,7 +140,7 @@ const AdminDashboard = () => {
       </Card>
     )
   }
-  const CallFormCreater = () => {
+  const CallCreateQuestionForm = () => {
     if (data.questions.length > 0 && data.forms.length != data.questions.length) {
       data.forms = []
       CreateQuestionForm()
@@ -128,7 +149,7 @@ const AdminDashboard = () => {
       getQuestions()
   }
   const CreateQuestionForm = () => {
-    //console.log(data.questions.length + " createform")
+    data.forms=[]
     for (let i = 0; i < data.questions.length; i++)
       data.forms.push(QuestionForm(i))
     setData({
@@ -148,7 +169,7 @@ const AdminDashboard = () => {
         Soru Ekleme ve Düzenleme
     </Paragraph>
       {data.forms}
-      <Button mode="outlined" onPress={updateQuestions}>
+      <Button mode="outlined" onPress={addQuestion}>
         Soru Ekle
     </Button>
       <Button mode="outlined" onPress={updateQuestions}>
