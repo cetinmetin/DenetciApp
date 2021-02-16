@@ -6,12 +6,12 @@ import Paragraph from '../components/Paragraph'
 import Button from '../components/Button'
 import { logoutUser } from '../api/auth-api'
 
-const Dashboard = () => (
+const UserReportDashboard = () => (
   <Background>
     <Logo />
-    <Header>Sorular</Header>
+    <Header>Denetçi Ekranı</Header>
     <Paragraph>
-      Raporlama
+      Yaptığım Raporlamalar
     </Paragraph>
     <Button mode="outlined" onPress={logoutUser}>
       Çıkış Yap
@@ -19,4 +19,4 @@ const Dashboard = () => (
   </Background>
 )
 
-export default Dashboard
+export default UserReportDashboard
