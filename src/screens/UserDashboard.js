@@ -13,7 +13,7 @@ import "firebase/firestore";
 import { Card } from 'react-native-paper';
 import Checkbox from 'expo-checkbox';
 
-const UserDashboard = () => {
+const UserDashboard = ({ navigation }) => {
   const [data, setData] = React.useState({
     questions: [],
     forms: [],
@@ -74,11 +74,14 @@ const UserDashboard = () => {
   function setPhotoAnswer(index) {
     if (data.answerMethods[index].photo == true && data.answerMethods[index].text == true) {
       //kamera açma ve fotoğraf çekme işlemleri
-      /*.then(*/data.answers[index] += " Fotoğraf Cihaza Kaydedildi "
+      navigation.navigate('CameraScreen')
+      /*.then(*/data.answers[index] += " - Fotoğraf Cihaza Kaydedildi - "
     }
-    else
+    else {
       //kamera açma ve fotoğraf çekme işlemleri
+      navigation.navigate('CameraScreen')
       /*.then(*/data.answers[index] = " Fotoğraf Cihaza Kaydedildi "
+    }
   }
   function QuestionForm(index) {
     if (data.answerMethods[index].text == true && data.answerMethods[index].photo == false) {
