@@ -56,8 +56,8 @@ const UserDashboard = ({ navigation }) => {
           await firebase.firestore()
             .collection('Reports')
             .doc(data.currentUser.data().name + " " + data.currentUser.data().surname + " " + data.currentUser.data().identityNumber)
-            .collection(currentTime.toUTCString())
-            .doc('Report')
+            .collection("Reports")
+            .doc(currentTime.toUTCString() + ' Tarihli Rapor')
             .set({
               ["Soru" + (i + 1)]: data.questions[i],
               ["Cevap" + (i + 1)]: data.answers[i]
