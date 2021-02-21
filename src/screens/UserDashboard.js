@@ -53,6 +53,12 @@ const UserDashboard = ({ navigation }) => {
       currentTime.setHours(currentTime.getHours() + 3)
       if (data.questions.length == data.answers.length) {
         for (let i = 0; i < data.answers.length; i++) {
+          //veritabanında field oluşturma
+          await firebase.firestore()
+            .collection('Reports')
+            .doc(data.currentUser.data().name + " " + data.currentUser.data().surname + " " + data.currentUser.data().identityNumber)
+            .set({ isim: data.currentUser.data().name })
+          //field oluşturduktan sonra raporu günderme
           await firebase.firestore()
             .collection('Reports')
             .doc(data.currentUser.data().name + " " + data.currentUser.data().surname + " " + data.currentUser.data().identityNumber)
