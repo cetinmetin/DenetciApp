@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { View, StyleSheet, TouchableOpacity, Keyboard, Text } from 'react-native'
+import { View, StyleSheet, TouchableOpacity, TouchableHighlight, Keyboard, Text } from 'react-native'
 import Background from '../components/Background'
 import Logo from '../components/Logo'
 import Header from '../components/Header'
@@ -12,12 +12,15 @@ import 'firebase/auth'
 import "firebase/firestore";
 import { Card } from 'react-native-paper';
 import Checkbox from 'expo-checkbox';
+import { Icon } from 'react-native-elements'
+import { Feather } from '@expo/vector-icons';
 
 const AdminDashboard = () => {
   const [data, setData] = React.useState({
     questions: [],
     forms: [],
     answerMethods: [],
+    timestamp: []
   })
 
   async function getQuestions() {
@@ -25,11 +28,15 @@ const AdminDashboard = () => {
       data.questions = []
       data.answerMethods = []
       data.forms = []
-      var tempQuestions = await firebase.firestore().collection('Questions').get()
+      data.timestamp = []
+      var tempQuestions = await firebase.firestore().collection('Questions').orderBy("createdAt", "asc").get()
       tempQuestions.docs.map(doc => data.questions.push(doc.id));
       tempQuestions.docs.map(doc => data.answerMethods.push(doc.data()));
+      tempQuestions.docs.map(doc => data.timestamp.push(doc.data()))
       data.questions.map(data => setData(previousData => ({ ...previousData, questions: previousData.questions.concat(data) })))
       data.answerMethods.map(data => setData(previousData => ({ ...previousData, answerMethods: previousData.answerMethods.concat(data) })))
+      data.timestamp.map(data => setData(previousData => ({ ...previousData, timestamp: previousData.timestamp.concat(data) })))
+
       if (data.questions.length != data.forms.length) {
         CallCreateQuestionForm()
       }
@@ -49,7 +56,8 @@ const AdminDashboard = () => {
         firebase.firestore().collection("Questions").doc(data.questions[i])
           .set({
             text: data.answerMethods[i].text,
-            photo: data.answerMethods[i].photo
+            photo: data.answerMethods[i].photo,
+            createdAt: data.timestamp[i].createdAt
           });
       }
       getQuestions()
@@ -65,42 +73,101 @@ const AdminDashboard = () => {
     })
   }
   function addQuestion() {
+    var currentTime = new Date()
     data.answerMethods.push({ text: false, photo: false })
     data.questions.push('')
+    data.timestamp.push({ createdAt: currentTime })
     setData({
       ...data,
       questions: data.questions,
-      answerMethods: data.answerMethods
+      answerMethods: data.answerMethods,
+      timestamp: data.timestamp
     })
     CreateQuestionForm()
   }
   function deleteQuestion(index) {
     data.answerMethods.splice(index, 1)
     data.questions.splice(index, 1)
+    data.timestamp.splice(index, 1)
     setData({
       ...data,
       questions: data.questions,
-      answerMethods: data.answerMethods
+      answerMethods: data.answerMethods,
+      timestamp: data.timestamp
     })
     CreateQuestionForm()
+  }
+  function questionDown(index) {
+    if (index < (data.questions.length - 1)) {
+      var tempTime = data.timestamp[(index + 1)].createdAt.seconds
+      data.timestamp[(index + 1)].createdAt.seconds = data.timestamp[index].createdAt.seconds
+      data.timestamp[index].createdAt.seconds = tempTime
+      updateQuestions()
+    }
+  }
+  function questionUp(index) {
+    if (index > 0) {
+      var tempTime = data.timestamp[(index - 1)].createdAt.seconds
+      data.timestamp[(index - 1)].createdAt.seconds = data.timestamp[index].createdAt.seconds
+      data.timestamp[index].createdAt.seconds = tempTime
+      updateQuestions()
+    }
   }
   function QuestionForm(index) {
     return (
       <Card style={{ flex: 1, width: "100%", marginTop: "2%" }} key={index}>
-        <Card.Title title={"Soru " + (index + 1)} />
+        <View style={{ flexDirection: "row" }}>
+          <View style={{ flex: 1 }}>
+            <Card.Title title={"Soru " + (index + 1)} />
+          </View>
+          <View style={{ flex: 0.25, marginTop: "4%", marginRight: "5.3%" }}>
+            <TouchableOpacity style={{
+              alignItems: 'center', justifyContent: 'center',
+              backgroundColor: "#4630EB",
+              borderRadius: 3,
+              marginLeft: "2%",
+              paddingVertical: "3%"
+            }} onPress={() => { questionUp(index) }} underlayColor='transparent'>
+              <Feather name="arrow-up-circle" size={24} color="white" />
+            </TouchableOpacity>
+          </View>
+          <View style={{ flex: 0.25, marginTop: "4%", marginRight: "5.3%" }}>
+            <TouchableOpacity style={{
+              alignItems: 'center', justifyContent: 'center',
+              backgroundColor: "#4630EB",
+              borderRadius: 3,
+              marginLeft: "2%",
+              paddingVertical: "3%"
+            }} onPress={() => { questionDown(index) }} underlayColor='transparent'>
+              <Feather name="arrow-down-circle" size={24} color="white" />
+            </TouchableOpacity>
+          </View>
+        </View>
         <Card.Content>
-          <TextInput
-            //label={"Soru " + (index + 1)}
-            // onSubmitEditing={Keyboard.dismiss}
-            // autoCorrect={false}
-            placeholder={data.questions[index]}
-            key={index}
-            //value={data.questions[index]}
-            onChangeText={(text) => questionInputChange(text, index)}
-          />
-          <Button mode="outlined" onPress={() => deleteQuestion(index)}>
-            Soruyu Sil
-          </Button>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <View style={{ flex: 4 }}>
+              <TextInput
+                //label={"Soru " + (index + 1)}
+                // onSubmitEditing={Keyboard.dismiss}
+                // autoCorrect={false}
+                placeholder={data.questions[index]}
+                key={index}
+                //value={data.questions[index]}
+                onChangeText={(text) => questionInputChange(text, index)}
+              />
+            </View>
+            <View style={{ flex: 0.72, marginTop: "2%" }}>
+              <TouchableOpacity style={{
+                alignItems: 'center', justifyContent: 'center',
+                backgroundColor: "red",
+                borderRadius: 3,
+                marginLeft: "2%",
+                paddingVertical: "40%"
+              }} onPress={() => { deleteQuestion(index) }} underlayColor='transparent'>
+                <Icon name="delete" size={24} color="white" />
+              </TouchableOpacity>
+            </View>
+          </View>
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             <View>
               <Text>Cevap Seçeneği:</Text>
@@ -149,7 +216,7 @@ const AdminDashboard = () => {
       getQuestions()
   }
   const CreateQuestionForm = () => {
-    data.forms=[]
+    data.forms = []
     for (let i = 0; i < data.questions.length; i++)
       data.forms.push(QuestionForm(i))
     setData({
