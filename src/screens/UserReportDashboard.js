@@ -11,6 +11,7 @@ import firebase from 'firebase/app'
 import 'firebase/auth'
 import "firebase/firestore";
 import { Card } from 'react-native-paper';
+import { useFocusEffect } from '@react-navigation/native';
 
 const UserReportDashboard = () => {
   const [data, setData] = React.useState({
@@ -21,10 +22,13 @@ const UserReportDashboard = () => {
   async function getMyReports() {
     try {
       data.myReports = []
-
+      data.currentUser = []
       data.currentUser = await firebase.firestore().collection('Users').doc(firebase.auth().currentUser.uid).get()
       var tempMyReports = await firebase.firestore().collection('Reports').doc(data.currentUser.data().name + " " + data.currentUser.data().surname + " " + data.currentUser.data().identityNumber).collection('Reports').get()
       tempMyReports.docs.map(doc => data.myReports.push(doc));
+      setData({
+        myReports: data.myReports
+      })
       if (data.myReports.length > 0) {
         createCollapse()
       }
@@ -44,7 +48,7 @@ const UserReportDashboard = () => {
               </View>
             </CollapseHeader>
             <CollapseBody>
-              <Text>{JSON.stringify(report.data(), Object.keys(report.data()).sort(),1).replace(/[{}",]/g, '')}</Text>
+              <Text>{JSON.stringify(report.data(), Object.keys(report.data()).sort(), 1).replace(/[{}",]/g, '')}</Text>
             </CollapseBody>
           </Collapse>
         </Card.Content>
@@ -60,10 +64,11 @@ const UserReportDashboard = () => {
       collapses: data.collapses
     })
   }
-  useEffect(() => {
-    getMyReports()
-  }, [])
-
+  useFocusEffect(
+    React.useCallback(() => {
+      getMyReports()
+    }, [])
+  );
   return (
     <Background>
       <Logo />
