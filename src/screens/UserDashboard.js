@@ -27,7 +27,7 @@ const UserDashboard = ({ navigation }) => {
       data.answerMethods = []
       data.forms = []
       data.answers = []
-      var tempQuestions = await firebase.firestore().collection('Questions').get()
+      var tempQuestions = await firebase.firestore().collection('Questions').orderBy("createdAt", "asc").get()
       data.currentUser = await firebase.firestore().collection('Users').doc(firebase.auth().currentUser.uid).get()
       tempQuestions.docs.map(doc => data.questions.push(doc.id));
       tempQuestions.docs.map(doc => data.answerMethods.push(doc.data()));
