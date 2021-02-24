@@ -11,27 +11,34 @@ import firebase from 'firebase/app'
 import 'firebase/auth'
 import "firebase/firestore";
 import { Card } from 'react-native-paper';
+import { useFocusEffect } from '@react-navigation/native';
 
 const AdminReportDashboard = () => {
     const [data, setData] = React.useState({
         reports: [],
         users: [],
         collapses: [],
+        userInfos: []
     })
     async function getReports() {
         try {
             data.users = []
             data.reports = []
+            data.userInfos = []
             var tempUsers = await firebase.firestore().collection('Reports').get()
             tempUsers.docs.map(doc => data.users.push(doc.id));
             if (data.users.length > 0) {
                 for (let i = 0; i < data.users.length; i++) {
                     var tempReports = await firebase.firestore().collection('Reports').doc(data.users[i]).collection('Reports').get()
                     tempReports.docs.map(doc => data.reports.push(doc));
+                    tempReports.docs.map(doc => data.userInfos.push(data.users[i])); //Aynı kullanıcıya ait diğer raporların isim soyisim bilgisi için
                 }
                 if (data.reports.length > 0) {
                     createCollapse()
                 }
+            }
+            else {
+                getReports()
             }
         } catch (e) {
             console.log("Raporların Alınması Sırasında Hata " + e)
@@ -40,7 +47,7 @@ const AdminReportDashboard = () => {
     function collapse(report, index) {
         return (
             <Card style={{ flex: 1, width: "100%", marginTop: "2%" }} key={index}>
-                <Card.Title title={data.users[index]} />
+                <Card.Title title={data.userInfos[index]} />
                 <Card.Content>
                     <Collapse>
                         <CollapseHeader>
@@ -65,10 +72,11 @@ const AdminReportDashboard = () => {
             collapses: data.collapses
         })
     }
-    useEffect(() => {
-        getReports()
-    }, [])
-
+    useFocusEffect(
+        React.useCallback(() => {
+            getReports()
+        }, [])
+    );
     return (
         <Background>
             <Logo />
