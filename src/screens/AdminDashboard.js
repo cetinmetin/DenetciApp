@@ -115,11 +115,11 @@ const AdminDashboard = () => {
   }
   function changeCheckboxText(index) {
     data.answerMethods[index].text = !data.answerMethods[index].text;
-    updateQuestions()
+    //updateQuestions()
   }
   function changeCheckboxPhoto(index) {
     data.answerMethods[index].photo = !data.answerMethods[index].photo;
-    updateQuestions()
+    //updateQuestions()
   }
   function QuestionForm(index) {
     return (
