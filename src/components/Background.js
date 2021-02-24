@@ -9,7 +9,7 @@ const Background = ({ children }) => (
     style={styles.background}
   >
     <ScrollView contentContainerStyle={{flexGrow: 1, justifyContent: 'center' }}>
-      <KeyboardAvoidingView style={styles.container} behavior="padding">
+      <KeyboardAvoidingView style={styles.container}>
         {children}
       </KeyboardAvoidingView>
     </ScrollView>
