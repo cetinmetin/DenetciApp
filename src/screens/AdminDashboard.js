@@ -11,7 +11,7 @@ import firebase from 'firebase/app'
 import 'firebase/auth'
 import "firebase/firestore";
 import { Card } from 'react-native-paper';
-import Checkbox from 'expo-checkbox';
+import Checkbox from "react-native-checkbox-animated";
 import { Icon } from 'react-native-elements'
 import { Feather } from '@expo/vector-icons';
 
@@ -113,6 +113,14 @@ const AdminDashboard = () => {
       updateQuestions()
     }
   }
+  function changeCheckboxText(index) {
+    data.answerMethods[index].text = !data.answerMethods[index].text;
+    updateQuestions()
+  }
+  function changeCheckboxPhoto(index) {
+    data.answerMethods[index].photo = !data.answerMethods[index].photo;
+    updateQuestions()
+  }
   function QuestionForm(index) {
     return (
       <Card style={{ flex: 1, width: "100%", marginTop: "2%" }} key={index}>
@@ -168,39 +176,29 @@ const AdminDashboard = () => {
               </TouchableOpacity>
             </View>
           </View>
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <View>
-              <Text>Cevap Seçeneği:</Text>
-            </View>
+          <View style={{ flexDirection: "column" }}>
+            <Paragraph>Cevaplandırma Yöntemi</Paragraph>
             <View>
               <Checkbox
-                value={data.answerMethods[index].text}
-                onChange={() => {
-                  data.answerMethods[index].text = !data.answerMethods[index].text;
-                  setData({ ...data, answerMethods: data.answerMethods });
-                  updateQuestions()
-                }}
-                key={index}
-                color={data.answerMethods[index].text ? '#4630EB' : undefined}
+                label="Metin Türünde Cevap"
+                onValueChange={() => changeCheckboxText(index)}
+                checked={data.answerMethods[index].text}
+                size={25}
+                checkedBackgroundColor={"#4630EB"}
+                checkMarkSize={20}
+                checkMarkColor={"white"}
               />
             </View>
             <View>
-              <Text>Metin</Text>
-            </View>
-            <View>
               <Checkbox
-                value={data.answerMethods[index].photo}
-                onChange={() => {
-                  data.answerMethods[index].photo = !data.answerMethods[index].photo;
-                  setData({ ...data, answerMethods: data.answerMethods });
-                  updateQuestions()
-                }}
-                key={index}
-                color={data.answerMethods[index].photo ? '#4630EB' : undefined}
+                label="Fotoğraf Türünde Cevap"
+                onValueChange={() => changeCheckboxPhoto(index)}
+                checked={data.answerMethods[index].photo}
+                size={25}
+                checkedBackgroundColor={"#4630EB"}
+                checkMarkSize={20}
+                checkMarkColor={"white"}
               />
-            </View>
-            <View>
-              <Text>Fotoğraf</Text>
             </View>
           </View>
         </Card.Content>
