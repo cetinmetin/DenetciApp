@@ -121,6 +121,9 @@ const AdminDashboard = () => {
     data.answerMethods[index].photo = !data.answerMethods[index].photo;
     //updateQuestions()
   }
+  function activityStatus(index) {
+
+  }
   function QuestionForm(index) {
     return (
       <Card style={{ flex: 1, width: "100%", marginTop: "2%" }} key={index}>
@@ -128,7 +131,32 @@ const AdminDashboard = () => {
           <View style={{ flex: 1 }}>
             <Card.Title title={"Soru " + (index + 1)} />
           </View>
-          <View style={{ flex: 0.25, marginTop: "4%", marginRight: "5.3%" }}>
+          <View style={{ flex: 0.80, marginTop: "2%", marginRight: "1%" }}>
+            <Checkbox
+              label="Aktif:"
+              labelContainerStyle={{ marginLeft: "12%" }}
+              onValueChange={() => activityStatus(index)}
+              checked={data.answerMethods[index].text}
+              size={28}
+              checkedBackgroundColor={"#4630EB"}
+              checkMarkSize={20}
+              checkMarkColor={"white"}
+              checkPosition={"right"}
+              checkboxContainerStyle={{ padding: 0, margin: 0 }}
+            />
+          </View>
+          <View style={{ flex: 0.25, marginTop: "4%", marginRight: "1%" }}>
+            <TouchableOpacity style={{
+              alignItems: 'center', justifyContent: 'center',
+              backgroundColor: "red",
+              borderRadius: 3,
+              marginLeft: "2%",
+              paddingVertical: "3%"
+            }} onPress={() => { deleteQuestion(index) }} underlayColor='transparent'>
+              <Icon name="delete" size={24} color="white" />
+            </TouchableOpacity>
+          </View>
+          <View style={{ flex: 0.25, marginTop: "4%", marginRight: "1%" }}>
             <TouchableOpacity style={{
               alignItems: 'center', justifyContent: 'center',
               backgroundColor: "#4630EB",
@@ -152,52 +180,98 @@ const AdminDashboard = () => {
           </View>
         </View>
         <Card.Content>
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <View style={{ flex: 4 }}>
-              <TextInput
-                //label={"Soru " + (index + 1)}
-                // onSubmitEditing={Keyboard.dismiss}
-                // autoCorrect={false}
-                placeholder={data.questions[index]}
-                key={index}
-                //value={data.questions[index]}
-                onChangeText={(text) => questionInputChange(text, index)}
-              />
-            </View>
-            <View style={{ flex: 0.72, marginTop: "2%" }}>
-              <TouchableOpacity style={{
-                alignItems: 'center', justifyContent: 'center',
-                backgroundColor: "red",
-                borderRadius: 3,
-                marginLeft: "2%",
-                paddingVertical: "40%"
-              }} onPress={() => { deleteQuestion(index) }} underlayColor='transparent'>
-                <Icon name="delete" size={24} color="white" />
-              </TouchableOpacity>
-            </View>
-          </View>
-          <View style={{ flexDirection: "column" }}>
-            <Paragraph>Cevaplandırma Yöntemi</Paragraph>
-            <View>
+          <TextInput
+            //label={"Soru " + (index + 1)}
+            // onSubmitEditing={Keyboard.dismiss}
+            // autoCorrect={false}
+            placeholder={data.questions[index]}
+            key={index}
+            //value={data.questions[index]}
+            onChangeText={(text) => questionInputChange(text, index)}
+          />
+          <Paragraph>Cevaplandırma Yöntemi</Paragraph>
+          <View style={{ flex: 2, flexDirection: "row" }}>
+            <View style={{ flex: 1, marginTop: "2%", marginLeft: "7.5%" }}>
               <Checkbox
-                label="Metin Türünde Cevap"
+                label="Metin/Rakam"
                 onValueChange={() => changeCheckboxText(index)}
                 checked={data.answerMethods[index].text}
                 size={25}
                 checkedBackgroundColor={"#4630EB"}
                 checkMarkSize={20}
                 checkMarkColor={"white"}
+                checkboxContainerStyle={{ padding: 0, margin: 0 }}
               />
-            </View>
-            <View>
               <Checkbox
-                label="Fotoğraf Türünde Cevap"
+                label="Fotoğraf"
                 onValueChange={() => changeCheckboxPhoto(index)}
                 checked={data.answerMethods[index].photo}
                 size={25}
                 checkedBackgroundColor={"#4630EB"}
                 checkMarkSize={20}
                 checkMarkColor={"white"}
+                checkboxContainerStyle={{ padding: 0, margin: 0 }}
+              />
+            </View>
+            <View style={{ flex: 1, marginTop: "2%", alignItems: "center" }}>
+              <Checkbox
+                label="Ses"
+                onValueChange={() => changeCheckboxPhoto(index)}
+                checked={data.answerMethods[index].photo}
+                size={25}
+                checkedBackgroundColor={"#4630EB"}
+                checkMarkSize={20}
+                checkMarkColor={"white"}
+                checkboxContainerStyle={{ padding: 0, margin: 0 }}
+                containerStyle={{ width: "63%" }}
+                checkPosition={"right"}
+              />
+              <Checkbox
+                label="Video"
+                onValueChange={() => changeCheckboxPhoto(index)}
+                checked={data.answerMethods[index].photo}
+                size={25}
+                checkedBackgroundColor={"#4630EB"}
+                checkMarkSize={20}
+                checkMarkColor={"white"}
+                checkboxContainerStyle={{ padding: 0, margin: 0 }}
+                containerStyle={{ width: "63%" }}
+                checkPosition={"right"}
+              />
+            </View>
+          </View>
+        </Card.Content>
+      </Card>
+    )
+  }
+  function signatureAndLocationInfo(index) {
+    return (
+      <Card style={{ flex: 1, width: "100%", marginTop: "2%" }} key={index}>
+        <View style={{ flex: 1 }}>
+          <Card.Title title={"İmza ve Konum Bilgisi"} />
+        </View>
+        <Card.Content>
+          <View style={{ flex: 2, flexDirection: "row" }}>
+            <View style={{ flex: 1, marginTop: "2%", marginRight: "1%" }}>
+              <Checkbox
+                label="İmza Gerekli"
+                onValueChange={() => changeCheckboxText(index)}
+                //checked={data.answerMethods[index].text}
+                size={25}
+                checkedBackgroundColor={"#4630EB"}
+                checkMarkSize={20}
+                checkMarkColor={"white"}
+                checkboxContainerStyle={{ padding: 0, margin: 0 }}
+              />
+              <Checkbox
+                label="Konum Gerekli"
+                onValueChange={() => changeCheckboxPhoto(index)}
+                //checked={data.answerMethods[index].photo}
+                size={25}
+                checkedBackgroundColor={"#4630EB"}
+                checkMarkSize={20}
+                checkMarkColor={"white"}
+                checkboxContainerStyle={{ padding: 0, margin: 0 }}
               />
             </View>
           </View>
@@ -215,8 +289,12 @@ const AdminDashboard = () => {
   }
   const CreateQuestionForm = () => {
     data.forms = []
-    for (let i = 0; i < data.questions.length; i++)
+    for (let i = 0; i < data.questions.length; i++) {
       data.forms.push(QuestionForm(i))
+      if (i == (data.questions.length - 1)) {
+        data.forms.push(signatureAndLocationInfo(i + 1))
+      }
+    }
     setData({
       ...data,
       forms: data.forms
@@ -234,13 +312,13 @@ const AdminDashboard = () => {
         Soru Ekleme ve Düzenleme
     </Paragraph>
       {data.forms}
-      <Button mode="outlined" onPress={addQuestion}>
+      <Button mode="outlined" style={{ backgroundColor: "lime" }} onPress={addQuestion}>
         Soru Ekle
     </Button>
-      <Button mode="outlined" onPress={updateQuestions}>
+      <Button mode="outlined" style={{ backgroundColor: "lime" }} onPress={updateQuestions}>
         Soruları Kaydet/Güncelle
     </Button>
-      <Button mode="outlined" onPress={logoutUser}>
+      <Button mode="outlined" style={{ backgroundColor: "red" }} onPress={logoutUser}>
         Çıkış Yap
     </Button>
     </Background>
