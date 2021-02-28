@@ -92,7 +92,7 @@ const UserDashboard = ({ navigation }) => {
   function QuestionForm(index) {
     if (data.answerMethods[index].text == true && data.answerMethods[index].photo == false) {
       return (
-        <View style={{ flex: 1, width: "100%", marginTop: "2%" }} key={index}>
+        <View style={{width: "100%", marginTop: "2%" }} key={index}>
           <Text>
             Soru {(index + 1)}: {data.questions[index]}
           </Text>
@@ -106,11 +106,11 @@ const UserDashboard = ({ navigation }) => {
     }
     else if (data.answerMethods[index].text == false && data.answerMethods[index].photo == true) {
       return (
-        <View style={{ flex: 1, width: "100%", marginTop: "2%" }} key={index}>
+        <View style={{width: "100%", marginTop: "2%" }} key={index}>
           <Text>
             Soru {(index + 1)}: {data.questions[index]}
           </Text>
-          <Button mode="outlined" onPress={() => setPhotoAnswer(index)}>
+          <Button mode="outlined" style={{backgroundColor:"lime"}} onPress={() => setPhotoAnswer(index)}>
             Fotoğraf Çek
         </Button>
         </View>
@@ -118,7 +118,7 @@ const UserDashboard = ({ navigation }) => {
     }
     else {
       return (
-        <View style={{ flex: 1, width: "100%", marginTop: "2%" }} key={index}>
+        <View style={{width: "100%", marginTop: "2%" }} key={index}>
           <Text>
             Soru {(index + 1)}: {data.questions[index]}
           </Text>
@@ -127,7 +127,7 @@ const UserDashboard = ({ navigation }) => {
             key={index}
             onChangeText={(text) => answerInputChange(text, index)}
           />
-          <Button mode="outlined" onPress={() => setPhotoAnswer(index)}>
+          <Button mode="outlined" style={{backgroundColor:"lime"}} onPress={() => setPhotoAnswer(index)}>
             Fotoğraf Çek
         </Button>
         </View>
@@ -162,10 +162,10 @@ const UserDashboard = ({ navigation }) => {
         Raporlama
     </Paragraph>
       {data.forms}
-      <Button mode="outlined" onPress={sendReport}>
+      <Button mode="outlined" style={{backgroundColor:"lime"}} onPress={sendReport}>
         Cevapları Gönder
     </Button>
-      <Button mode="outlined" onPress={logoutUser}>
+      <Button mode="outlined" style={{backgroundColor:"red"}} onPress={logoutUser}>
         Çıkış Yap
     </Button>
     </Background>

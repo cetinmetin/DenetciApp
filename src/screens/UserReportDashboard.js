@@ -77,7 +77,7 @@ const UserReportDashboard = () => {
         Yaptığım Raporlamalar
     </Paragraph>
       {data.collapses}
-      <Button mode="outlined" onPress={logoutUser}>
+      <Button mode="outlined" style={{backgroundColor:"red"}} onPress={logoutUser}>
         Çıkış Yap
     </Button>
     </Background>
