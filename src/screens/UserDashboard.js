@@ -29,10 +29,11 @@ const UserDashboard = ({ navigation }) => {
       data.answers = []
       var tempQuestions = await firebase.firestore().collection('Questions').orderBy("createdAt", "asc").get()
       data.currentUser = await firebase.firestore().collection('Users').doc(firebase.auth().currentUser.uid).get()
-      tempQuestions.docs.map(doc => data.questions.push(doc.id));
-      tempQuestions.docs.map(doc => data.answerMethods.push(doc.data()));
+      tempQuestions.docs.map(doc => doc.data().status ? data.questions.push(doc.id) : "");
+      tempQuestions.docs.map(doc => doc.data().status ? data.answerMethods.push(doc.data()) : "");
       data.questions.map(data => setData(previousData => ({ ...previousData, questions: previousData.questions.concat(data) })))
       data.answerMethods.map(data => setData(previousData => ({ ...previousData, answerMethods: previousData.answerMethods.concat(data) })))
+
       if (data.questions.length != data.forms.length) {
         CallCreateQuestionForm()
       }
@@ -92,7 +93,7 @@ const UserDashboard = ({ navigation }) => {
   function QuestionForm(index) {
     if (data.answerMethods[index].text == true && data.answerMethods[index].photo == false) {
       return (
-        <View style={{width: "100%", marginTop: "2%" }} key={index}>
+        <View style={{ width: "100%", marginTop: "2%" }} key={index}>
           <Text>
             Soru {(index + 1)}: {data.questions[index]}
           </Text>
@@ -106,11 +107,11 @@ const UserDashboard = ({ navigation }) => {
     }
     else if (data.answerMethods[index].text == false && data.answerMethods[index].photo == true) {
       return (
-        <View style={{width: "100%", marginTop: "2%" }} key={index}>
+        <View style={{ width: "100%", marginTop: "2%" }} key={index}>
           <Text>
             Soru {(index + 1)}: {data.questions[index]}
           </Text>
-          <Button mode="outlined" style={{backgroundColor:"lime"}} onPress={() => setPhotoAnswer(index)}>
+          <Button mode="outlined" style={{ backgroundColor: "lime" }} onPress={() => setPhotoAnswer(index)}>
             Fotoğraf Çek
         </Button>
         </View>
@@ -118,7 +119,7 @@ const UserDashboard = ({ navigation }) => {
     }
     else {
       return (
-        <View style={{width: "100%", marginTop: "2%" }} key={index}>
+        <View style={{ width: "100%", marginTop: "2%" }} key={index}>
           <Text>
             Soru {(index + 1)}: {data.questions[index]}
           </Text>
@@ -127,7 +128,7 @@ const UserDashboard = ({ navigation }) => {
             key={index}
             onChangeText={(text) => answerInputChange(text, index)}
           />
-          <Button mode="outlined" style={{backgroundColor:"lime"}} onPress={() => setPhotoAnswer(index)}>
+          <Button mode="outlined" style={{ backgroundColor: "lime" }} onPress={() => setPhotoAnswer(index)}>
             Fotoğraf Çek
         </Button>
         </View>
@@ -162,10 +163,10 @@ const UserDashboard = ({ navigation }) => {
         Raporlama
     </Paragraph>
       {data.forms}
-      <Button mode="outlined" style={{backgroundColor:"lime"}} onPress={sendReport}>
+      <Button mode="outlined" style={{ backgroundColor: "lime" }} onPress={sendReport}>
         Cevapları Gönder
     </Button>
-      <Button mode="outlined" style={{backgroundColor:"red"}} onPress={logoutUser}>
+      <Button mode="outlined" style={{ backgroundColor: "red" }} onPress={logoutUser}>
         Çıkış Yap
     </Button>
     </Background>
