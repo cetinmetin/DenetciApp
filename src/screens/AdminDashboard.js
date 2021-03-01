@@ -20,7 +20,8 @@ const AdminDashboard = () => {
     questions: [],
     forms: [],
     answerMethods: [],
-    timestamp: []
+    timestamp: [],
+    status: []
   })
 
   async function getQuestions() {
@@ -29,13 +30,16 @@ const AdminDashboard = () => {
       data.answerMethods = []
       data.forms = []
       data.timestamp = []
+      data.status = []
       var tempQuestions = await firebase.firestore().collection('Questions').orderBy("createdAt", "asc").get()
       tempQuestions.docs.map(doc => data.questions.push(doc.id));
       tempQuestions.docs.map(doc => data.answerMethods.push(doc.data()));
-      tempQuestions.docs.map(doc => data.timestamp.push(doc.data()))
+      tempQuestions.docs.map(doc => data.timestamp.push(doc.data().createdAt))
+      tempQuestions.docs.map(doc => data.status.push(doc.data().status))
       data.questions.map(data => setData(previousData => ({ ...previousData, questions: previousData.questions.concat(data) })))
       data.answerMethods.map(data => setData(previousData => ({ ...previousData, answerMethods: previousData.answerMethods.concat(data) })))
       data.timestamp.map(data => setData(previousData => ({ ...previousData, timestamp: previousData.timestamp.concat(data) })))
+      data.status.map(data => setData(previousData => ({ ...previousData, status: previousData.status.concat(data) })))
 
       if (data.questions.length != data.forms.length) {
         CallCreateQuestionForm()
@@ -57,7 +61,10 @@ const AdminDashboard = () => {
           .set({
             text: data.answerMethods[i].text,
             photo: data.answerMethods[i].photo,
-            createdAt: data.timestamp[i].createdAt
+            createdAt: data.timestamp[i],
+            status: data.status[i],
+            voice: data.answerMethods[i].voice,
+            video: data.answerMethods[i].video
           });
       }
       getQuestions()
@@ -74,14 +81,16 @@ const AdminDashboard = () => {
   }
   function addQuestion() {
     var currentTime = new Date()
-    data.answerMethods.push({ text: false, photo: false })
+    data.answerMethods.push({ text: false, photo: false, voice: false, video: false })
     data.questions.push('')
-    data.timestamp.push({ createdAt: currentTime })
+    data.timestamp.push(currentTime)
+    data.status.push(true)
     setData({
       ...data,
       questions: data.questions,
       answerMethods: data.answerMethods,
-      timestamp: data.timestamp
+      timestamp: data.timestamp,
+      status: data.status
     })
     CreateQuestionForm()
   }
@@ -89,27 +98,29 @@ const AdminDashboard = () => {
     data.answerMethods.splice(index, 1)
     data.questions.splice(index, 1)
     data.timestamp.splice(index, 1)
+    data.status.splice(index, 1)
     setData({
       ...data,
       questions: data.questions,
       answerMethods: data.answerMethods,
-      timestamp: data.timestamp
+      timestamp: data.timestamp,
+      status: data.status
     })
     CreateQuestionForm()
   }
   function questionDown(index) {
     if (index < (data.questions.length - 1)) {
-      var tempTime = data.timestamp[(index + 1)].createdAt.seconds
-      data.timestamp[(index + 1)].createdAt.seconds = data.timestamp[index].createdAt.seconds
-      data.timestamp[index].createdAt.seconds = tempTime
+      var tempTime = data.timestamp[(index + 1)].seconds
+      data.timestamp[(index + 1)].seconds = data.timestamp[index].seconds
+      data.timestamp[index].seconds = tempTime
       updateQuestions()
     }
   }
   function questionUp(index) {
     if (index > 0) {
-      var tempTime = data.timestamp[(index - 1)].createdAt.seconds
-      data.timestamp[(index - 1)].createdAt.seconds = data.timestamp[index].createdAt.seconds
-      data.timestamp[index].createdAt.seconds = tempTime
+      var tempTime = data.timestamp[(index - 1)].seconds
+      data.timestamp[(index - 1)].seconds = data.timestamp[index].seconds
+      data.timestamp[index].seconds = tempTime
       updateQuestions()
     }
   }
@@ -121,22 +132,30 @@ const AdminDashboard = () => {
     data.answerMethods[index].photo = !data.answerMethods[index].photo;
     //updateQuestions()
   }
+  function changeCheckboxVoice(index) {
+    data.answerMethods[index].voice = !data.answerMethods[index].voice;
+    //updateQuestions()
+  }
+  function changeCheckboxVideo(index) {
+    data.answerMethods[index].video = !data.answerMethods[index].video;
+    //updateQuestions()
+  }
   function activityStatus(index) {
-
+    data.status[index] = !data.status[index]
   }
   function QuestionForm(index) {
     return (
-      <Card style={{ flex: 1, width: "100%", marginTop: "2%" }} key={index}>
+      <Card style={{ flex: 1, width: "100%", marginTop: "2%", backgroundColor: data.status[index] ? "" : "tomato" }} key={index}>
         <View style={{ flexDirection: "row" }}>
           <View style={{ flex: 1 }}>
             <Card.Title title={"Soru " + (index + 1)} />
           </View>
           <View style={{ flex: 0.80, marginTop: "2%", marginRight: "1%" }}>
             <Checkbox
-              label="Aktif:"
+              label={data.status[index] ? "Aktif" : "Pasif"}
               labelContainerStyle={{ marginLeft: "12%" }}
               onValueChange={() => activityStatus(index)}
-              checked={data.answerMethods[index].text}
+              checked={data.status[index]}
               size={28}
               checkedBackgroundColor={"#4630EB"}
               checkMarkSize={20}
@@ -216,8 +235,8 @@ const AdminDashboard = () => {
             <View style={{ flex: 1, marginTop: "2%", alignItems: "center" }}>
               <Checkbox
                 label="Ses"
-                onValueChange={() => changeCheckboxPhoto(index)}
-                checked={data.answerMethods[index].photo}
+                onValueChange={() => changeCheckboxVoice(index)}
+                checked={data.answerMethods[index].voice}
                 size={25}
                 checkedBackgroundColor={"#4630EB"}
                 checkMarkSize={20}
@@ -228,8 +247,8 @@ const AdminDashboard = () => {
               />
               <Checkbox
                 label="Video"
-                onValueChange={() => changeCheckboxPhoto(index)}
-                checked={data.answerMethods[index].photo}
+                onValueChange={() => changeCheckboxVideo(index)}
+                checked={data.answerMethods[index].video}
                 size={25}
                 checkedBackgroundColor={"#4630EB"}
                 checkMarkSize={20}
