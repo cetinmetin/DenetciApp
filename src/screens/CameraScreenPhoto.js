@@ -7,7 +7,7 @@ import * as Permissions from 'expo-permissions';
 
 let camera = Camera
 
-export default function CameraScreen() {
+export default function CameraScreenPhoto() {
 
     const [startCamera, setStartCamera] = React.useState(false)
     const [previewVisible, setPreviewVisible] = React.useState(false)
