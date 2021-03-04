@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { View, StyleSheet, TouchableOpacity, Keyboard, Text } from 'react-native'
+import { View, StyleSheet, TouchableOpacity, Keyboard, Text, Alert } from 'react-native'
 import Background from '../components/Background'
 import Logo from '../components/Logo'
 import Header from '../components/Header'
@@ -19,7 +19,8 @@ const UserDashboard = ({ navigation }) => {
     forms: [],
     answerMethods: [],
     answers: [],
-    currentUser: []
+    currentUser: [],
+    answerCounter: []
   })
   async function getQuestions() {
     try {
@@ -27,6 +28,7 @@ const UserDashboard = ({ navigation }) => {
       data.answerMethods = []
       data.forms = []
       data.answers = []
+      data.answerCounter = []
       var tempQuestions = await firebase.firestore().collection('Questions').orderBy("createdAt", "asc").get()
       data.currentUser = await firebase.firestore().collection('Users').doc(firebase.auth().currentUser.uid).get()
       tempQuestions.docs.map(doc => doc.data().status ? data.questions.push(doc.id) : "");
@@ -42,17 +44,34 @@ const UserDashboard = ({ navigation }) => {
     }
   }
   function answerInputChange(val, index) {
-    data.answers[index] = val
+    if (data.answerMethods[index].photo || data.answerMethods[index].voice || data.answerMethods[index].video) {
+      if (data.answers[index] == 'undefined' || data.answers[index] == null)
+        data.answers[index] = []
+      data.answers[index] += val
+    }
+    else
+      data.answers[index] = val
     setData({
       ...data,
-      answers: data.answers
+      answers: data.answers,
     })
   }
   async function sendReport() {
     try {
       var currentTime = new Date()
+      let answerCounter = 0
       currentTime.setHours(currentTime.getHours() + 3)
-      if (data.questions.length == data.answers.length) {
+      for (let i = 0; i < data.answerMethods.length; i++) {
+        if (data.answerMethods[i].photo)
+          answerCounter++
+        if (data.answerMethods[i].text)
+          answerCounter++
+        if (data.answerMethods[i].voice)
+          answerCounter++
+        if (data.answerMethods[i].video)
+          answerCounter++
+      }
+      if (data.answerCounter.length >= answerCounter) {
         for (let i = 0; i < data.answers.length; i++) {
           //veritabanında field oluşturma
           await firebase.firestore()
@@ -70,8 +89,24 @@ const UserDashboard = ({ navigation }) => {
               ["Cevap" + (i + 1)]: data.answers[i]
             }, { merge: true })
         }
+        Alert.alert(
+          'Teşekkürler',
+          'Raporlama Başarılı',
+          [
+            //{ text: 'Cancel', onPress: () => console.log('Cancel Pressed!') },
+            { text: 'Tamam', onPress: getQuestions },
+          ],
+          { cancelable: false }
+        )
       } else {
-        alert("Tüm Alanları Eksiksiz Doldurun")
+        Alert.alert(
+          'Hata',
+          'Tüm Cevap Seçenekleri Eksiksiz Doldurulmalı',
+          [
+            { text: 'Tamam' },
+          ],
+          { cancelable: false }
+        )
       }
     }
     catch (e) {
@@ -79,60 +114,117 @@ const UserDashboard = ({ navigation }) => {
     }
   }
   function setPhotoAnswer(index) {
-    if (data.answerMethods[index].photo == true && data.answerMethods[index].text == true) {
-      //kamera açma ve fotoğraf çekme işlemleri
-      navigation.navigate('CameraScreen')
-      /*.then(*/data.answers[index] += " - Fotoğraf Cihaza Kaydedildi - "
+    if (data.answerMethods[index].text || data.answerMethods[index].video || data.answerMethods[index].voice) {
+      navigation.navigate('CameraScreenPhoto')
+      if (data.answers[index] == 'undefined' || data.answers[index] == null)
+        data.answers[index] = []
+      data.answers[index] += " - Fotoğraf Cihaza Kaydedildi - "
     }
     else {
-      //kamera açma ve fotoğraf çekme işlemleri
-      navigation.navigate('CameraScreen')
-      /*.then(*/data.answers[index] = " Fotoğraf Cihaza Kaydedildi "
+      navigation.navigate('CameraScreenPhoto')
+      data.answers[index] = " Fotoğraf Cihaza Kaydedildi "
     }
+    data.answerCounter.push('')
+  }
+  function setVideoAnswer(index) {
+    if (data.answerMethods[index].text || data.answerMethods[index].photo || data.answerMethods[index].voice) {
+      navigation.navigate('CameraScreenVideo')
+      if (data.answers[index] == 'undefined' || data.answers[index] == null)
+        data.answers[index] = []
+      data.answers[index] += " - Video Cihaza Kaydedildi -"
+    }
+    else {
+      navigation.navigate('CameraScreenVideo'),
+        data.answers[index] = " - Video Cihaza Kaydedildi -"
+    }
+    data.answerCounter.push('')
+  }
+  function setVoiceAnswer(index) {
+    if (data.answerMethods[index].text || data.answerMethods[index].photo || data.answerMethods[index].video) {
+      //navigation.navigate('CameraScreenVideo')
+      if (data.answers[index] == 'undefined' || data.answers[index] == null)
+        data.answers[index] = []
+      data.answers[index] += " - Ses Kaydı Cihaza Kaydedildi -"
+    }
+    else {
+      //navigation.navigate('CameraScreenVideo'),
+      data.answers[index] = " - Ses Kaydı Cihaza Kaydedildi -"
+    }
+    data.answerCounter.push('')
+  }
+  function TextInputCounter() {
+    data.answerCounter.push('')
   }
   function QuestionForm(index) {
-    if (data.answerMethods[index].text == true && data.answerMethods[index].photo == false) {
-      return (
-        <View style={{ width: "100%", marginTop: "2%" }} key={index}>
+    if (data.answerMethods[index].text == true) {
+      data.forms.push(
+        <View style={{ width: "100%", marginTop: "1%" }} key={index + " Text"}>
           <Text>
             Soru {(index + 1)}: {data.questions[index]}
           </Text>
           <TextInput
             placeholder="Cevabınız"
             key={index}
-            onChangeText={(text) => answerInputChange(text, index)}
+            //onChangeText={(text) => answerInputChange(text, index)}
+            onEndEditing={(e) => { answerInputChange(e.nativeEvent.text, index); TextInputCounter() }}
           />
         </View>
       )
     }
-    else if (data.answerMethods[index].text == false && data.answerMethods[index].photo == true) {
-      return (
-        <View style={{ width: "100%", marginTop: "2%" }} key={index}>
-          <Text>
-            Soru {(index + 1)}: {data.questions[index]}
-          </Text>
-          <Button mode="outlined" style={{ backgroundColor: "lime" }} onPress={() => setPhotoAnswer(index)}>
+    if (data.answerMethods[index].photo == true) {
+      data.answerMethods[index].text ? data.forms.push(
+        <View style={{ width: "100%" }} key={index + " Photo"}>
+          <Button mode="outlined" style={{ backgroundColor: "lightblue" }} key={index + " Photo"} onPress={() => setPhotoAnswer(index)}>
             Fotoğraf Çek
+      </Button>
+        </View>) :
+        data.forms.push(
+          <View style={{ width: "100%", marginTop: "1%" }} key={index + " Photo"}>
+            <Text>
+              Soru {(index + 1)}: {data.questions[index]}
+            </Text>
+            <Button mode="outlined" style={{ backgroundColor: "lightblue" }} key={index + " Photo"} onPress={() => setPhotoAnswer(index)}>
+              Fotoğraf Çek
         </Button>
-        </View>
-      )
+          </View>
+        )
     }
-    else {
-      return (
-        <View style={{ width: "100%", marginTop: "2%" }} key={index}>
-          <Text>
-            Soru {(index + 1)}: {data.questions[index]}
-          </Text>
-          <TextInput
-            placeholder="Cevabınız"
-            key={index}
-            onChangeText={(text) => answerInputChange(text, index)}
-          />
-          <Button mode="outlined" style={{ backgroundColor: "lime" }} onPress={() => setPhotoAnswer(index)}>
-            Fotoğraf Çek
+    if (data.answerMethods[index].voice == true) {
+      data.answerMethods[index].text || data.answerMethods[index].photo ? data.forms.push(
+        <View style={{ width: "100%" }} key={index + " Voice"}>
+          <Button mode="outlined" style={{ backgroundColor: "lightblue" }} key={index + " Voice"} onPress={() => setVoiceAnswer(index)}>
+            Ses Kaydet
+      </Button>
+        </View>) :
+        data.forms.push(
+          <View style={{ width: "100%", marginTop: "1%" }} key={index + " Voice"}>
+            <Text>
+              Soru {(index + 1)}: {data.questions[index]}
+            </Text>
+            <Button mode="outlined" style={{ backgroundColor: "lightblue" }} key={index + " Voice"} onPress={() => setVoiceAnswer(index)}>
+              Ses Kaydet
         </Button>
-        </View>
-      )
+          </View>
+        )
+    }
+    if (data.answerMethods[index].video == true) {
+      data.answerMethods[index].text || data.answerMethods[index].photo
+        || data.answerMethods[index].voice ? data.forms.push(
+          <View style={{ width: "100%" }} key={index + " Video"}>
+            <Button mode="outlined" style={{ backgroundColor: "lightblue" }} key={index + " Video"} onPress={() => setVideoAnswer(index)}>
+              Video Çek
+      </Button>
+          </View>) :
+        data.forms.push(
+          <View style={{ width: "100%", marginTop: "1%" }} key={index + " Video"}>
+            <Text>
+              Soru {(index + 1)}: {data.questions[index]}
+            </Text>
+            <Button mode="outlined" style={{ backgroundColor: "lightblue" }} key={index + " Video"} onPress={() => setVideoAnswer(index)}>
+              Video Çek
+        </Button>
+          </View>
+        )
     }
   }
   const CallCreateQuestionForm = () => {
@@ -146,7 +238,7 @@ const UserDashboard = ({ navigation }) => {
   const CreateQuestionForm = () => {
     data.forms = []
     for (let i = 0; i < data.questions.length; i++)
-      data.forms.push(QuestionForm(i))
+      QuestionForm(i)
     setData({
       ...data,
       forms: data.forms
@@ -163,7 +255,15 @@ const UserDashboard = ({ navigation }) => {
         Raporlama
     </Paragraph>
       {data.forms}
-      <Button mode="outlined" style={{ backgroundColor: "lime" }} onPress={sendReport}>
+      <View
+        style={{
+          borderWidth: 0.5,
+          borderColor: 'gray',
+          margin: 10,
+          width: "100%"
+        }}
+      />
+      <Button mode="contained" style={{ marginTop: "4%" }} onPress={sendReport}>
         Cevapları Gönder
     </Button>
       <Button mode="outlined" style={{ backgroundColor: "red" }} onPress={logoutUser}>
