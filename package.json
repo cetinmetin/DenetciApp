@@ -32,7 +32,8 @@
     "react-native-screens": "~2.10.1",
     "react-native-status-bar-height": "^2.6.0",
     "react-native-web": "~0.13.12",
-    "expo-av": "~8.6.0"
+    "expo-av": "~8.6.0",
+    "@react-native-community/slider": "3.0.3"
   },
   "devDependencies": {
     "@babel/core": "~7.9.0",
