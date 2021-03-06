@@ -40,7 +40,15 @@ const UserDashboard = ({ navigation }) => {
         CallCreateQuestionForm()
       }
     } catch (e) {
-      alert("Sorular Alınırken Hata Oluştu - " + e)
+      Alert.alert(
+        'Hata',
+        "Sorular Alınırken Hata Oluştu - " + e,
+        [
+          //{ text: 'Cancel', onPress: () => console.log('Cancel Pressed!') },
+          { text: 'Tamam', onPress: getQuestions },
+        ],
+        { cancelable: false }
+      )
     }
   }
   function answerInputChange(val, index) {
@@ -141,13 +149,13 @@ const UserDashboard = ({ navigation }) => {
   }
   function setVoiceAnswer(index) {
     if (data.answerMethods[index].text || data.answerMethods[index].photo || data.answerMethods[index].video) {
-      //navigation.navigate('CameraScreenVideo')
+      navigation.navigate('AudioRecordScreen')
       if (data.answers[index] == 'undefined' || data.answers[index] == null)
         data.answers[index] = []
       data.answers[index] += " - Ses Kaydı Cihaza Kaydedildi -"
     }
     else {
-      //navigation.navigate('CameraScreenVideo'),
+      navigation.navigate('AudioRecordScreen')
       data.answers[index] = " - Ses Kaydı Cihaza Kaydedildi -"
     }
     data.answerCounter.push('')
