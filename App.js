@@ -16,7 +16,8 @@ import {
   AdminReportDashboard,
   UserReportDashboard,
   CameraScreenPhoto,
-  CameraScreenVideo
+  CameraScreenVideo,
+  AudioRecordScreen,
 } from './src/screens'
 import { FIREBASE_CONFIG } from './src/core/config'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -106,6 +107,7 @@ const App = () => {
           <Stack.Screen name="AdminDashboard" component={AdminTabNavigator} />
           <Stack.Screen name="CameraScreenPhoto" component={CameraScreenPhoto} />
           <Stack.Screen name="CameraScreenVideo" component={CameraScreenVideo} />
+          <Stack.Screen name="AudioRecordScreen" component={AudioRecordScreen} />
           <Stack.Screen
             name="ForgotPasswordScreen"
             component={ForgotPasswordScreen}
