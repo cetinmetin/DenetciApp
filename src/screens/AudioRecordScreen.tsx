@@ -13,6 +13,7 @@ import * as FileSystem from "expo-file-system";
 import * as Permissions from "expo-permissions";
 import * as Icons from "../components/AudioRecordScreen/Icons";
 import * as MediaLibrary from 'expo-media-library';
+import BackButton from '../components/BackButton'
 
 const { width: DEVICE_WIDTH, height: DEVICE_HEIGHT } = Dimensions.get("window");
 const BACKGROUND_COLOR = "#FFF8ED";
@@ -20,7 +21,7 @@ const LIVE_COLOR = "#FF0000";
 const DISABLED_OPACITY = 0.5;
 // const RATE_SCALE = 3.0;
 
-type Props = {};
+type Props = { navigation };
 
 type State = {
     haveRecordingPermissions: boolean;
@@ -38,8 +39,7 @@ type State = {
     volume: number;
     // rate: number;
 };
-
-export default class AudioRecordScreen extends React.Component<Props, State> {
+export default class AudioRecordScreen extends React.Component<Props, State>{
     private recording: Audio.Recording | null;
     private sound: Audio.Sound | null;
     private isSeeking: boolean;
@@ -89,7 +89,11 @@ export default class AudioRecordScreen extends React.Component<Props, State> {
         // })();
         this.askForPermission();
     }
-
+    componentWillUnmount() {
+        this.setState({
+            isLoading: true,
+        });
+    }
     private askForPermission = async () => {
         const response = await Permissions.askAsync(Permissions.AUDIO_RECORDING);
         this.setState({
@@ -369,6 +373,7 @@ export default class AudioRecordScreen extends React.Component<Props, State> {
         if (!this.state.haveRecordingPermissions) {
             return (
                 <View style={styles.container}>
+                    <BackButton goBack={this.props.navigation.goBack} />
                     <View />
                     <Text
                         style={
@@ -384,6 +389,7 @@ export default class AudioRecordScreen extends React.Component<Props, State> {
 
         return (
             <View style={styles.container}>
+                <BackButton goBack={this.props.navigation.goBack} />
                 <View
                     style={[
                         styles.halfScreenContainer,
