@@ -21,7 +21,9 @@ const AdminDashboard = () => {
     forms: [],
     answerMethods: [],
     timestamp: [],
-    status: []
+    status: [],
+    location: false,
+    signature: false
   })
 
   async function getQuestions() {
@@ -142,6 +144,32 @@ const AdminDashboard = () => {
   }
   function activityStatus(index) {
     data.status[index] = !data.status[index]
+  }
+  function changeCheckboxSignature() {
+    data.signature = !data.signature
+    updateSignatureAndLocationInformations()
+  }
+  function changeCheckboxLocation() {
+    data.location = !data.location
+    updateSignatureAndLocationInformations()
+  }
+  function updateSignatureAndLocationInformations() {
+    firebase.firestore().collection("SignatureAndLocationInformation").doc("Informations")
+      .set({
+        location: data.location,
+        signature: data.signature
+      });
+  }
+  async function getSignatureAndLocationInformations() {
+    const signatureAndLocation = await firebase.firestore().collection('SignatureAndLocationInformation')
+      .doc("Informations").get()
+    data.location = signatureAndLocation.data().location
+    data.signature = signatureAndLocation.data().signature
+    setData({
+      ...data,
+      location: data.location,
+      signature: data.signature
+    })
   }
   function QuestionForm(index) {
     return (
@@ -274,8 +302,8 @@ const AdminDashboard = () => {
             <View style={{ flex: 1, marginTop: "2%", marginRight: "1%" }}>
               <Checkbox
                 label="İmza Gerekli"
-                onValueChange={() => changeCheckboxText(index)}
-                //checked={data.answerMethods[index].text}
+                onValueChange={() => changeCheckboxSignature()}
+                checked={data.signature}
                 size={25}
                 checkedBackgroundColor={"#4630EB"}
                 checkMarkSize={20}
@@ -284,8 +312,8 @@ const AdminDashboard = () => {
               />
               <Checkbox
                 label="Konum Gerekli"
-                onValueChange={() => changeCheckboxPhoto(index)}
-                //checked={data.answerMethods[index].photo}
+                onValueChange={() => changeCheckboxLocation()}
+                checked={data.location}
                 size={25}
                 checkedBackgroundColor={"#4630EB"}
                 checkMarkSize={20}
@@ -311,7 +339,12 @@ const AdminDashboard = () => {
     for (let i = 0; i < data.questions.length; i++) {
       data.forms.push(QuestionForm(i))
       if (i == (data.questions.length - 1)) {
-        data.forms.push(signatureAndLocationInfo(i + 1))
+        try {
+          getSignatureAndLocationInformations()
+          data.forms.push(signatureAndLocationInfo(i + 1))
+        } catch {
+          alert("Konum ve İmza Bilgileri Alınamadı")
+        }
       }
     }
     setData({
