@@ -12,6 +12,8 @@ import 'firebase/auth'
 import "firebase/firestore";
 import { Card } from 'react-native-paper';
 import Checkbox from 'expo-checkbox';
+import LocationDetector from '../components/LocationDetector'
+import { useSelector, useDispatch } from 'react-redux'
 
 const UserDashboard = ({ navigation }) => {
   const [data, setData] = React.useState({
@@ -20,15 +22,21 @@ const UserDashboard = ({ navigation }) => {
     answerMethods: [],
     answers: [],
     currentUser: [],
-    answerCounter: []
+    answerCount: [],
+    signatureAndLocation: { signature: false, location: false },
   })
+
+  let address = useSelector(state => {
+    return state
+  })
+
   async function getQuestions() {
     try {
       data.questions = []
       data.answerMethods = []
       data.forms = []
       data.answers = []
-      data.answerCounter = []
+      data.answerCount = []
       var tempQuestions = await firebase.firestore().collection('Questions').orderBy("createdAt", "asc").get()
       data.currentUser = await firebase.firestore().collection('Users').doc(firebase.auth().currentUser.uid).get()
       tempQuestions.docs.map(doc => doc.data().status ? data.questions.push(doc.id) : "");
@@ -37,6 +45,7 @@ const UserDashboard = ({ navigation }) => {
       data.answerMethods.map(data => setData(previousData => ({ ...previousData, answerMethods: previousData.answerMethods.concat(data) })))
 
       if (data.questions.length != data.forms.length) {
+        await getSignatureAndLocationInformations()
         CallCreateQuestionForm()
       }
     } catch (e) {
@@ -64,22 +73,30 @@ const UserDashboard = ({ navigation }) => {
       answers: data.answers,
     })
   }
+  function answerCounter() {
+    let counter = 0
+    for (let i = 0; i < data.answerMethods.length; i++) {
+      if (data.answerMethods[i].photo)
+        counter++
+      if (data.answerMethods[i].text)
+        counter++
+      if (data.answerMethods[i].voice)
+        counter++
+      if (data.answerMethods[i].video)
+        counter++
+    }
+    if (data.signatureAndLocation.location)
+      counter++
+    if (data.signatureAndLocation.signature)
+      counter++
+    return counter
+  }
   async function sendReport() {
     try {
       var currentTime = new Date()
-      let answerCounter = 0
       currentTime.setHours(currentTime.getHours() + 3)
-      for (let i = 0; i < data.answerMethods.length; i++) {
-        if (data.answerMethods[i].photo)
-          answerCounter++
-        if (data.answerMethods[i].text)
-          answerCounter++
-        if (data.answerMethods[i].voice)
-          answerCounter++
-        if (data.answerMethods[i].video)
-          answerCounter++
-      }
-      if (data.answerCounter.length >= answerCounter) {
+      answerCounter()
+      if (data.answerCount.length >= answerCounter()) {
         for (let i = 0; i < data.answers.length; i++) {
           //veritabanında field oluşturma
           await firebase.firestore()
@@ -96,6 +113,21 @@ const UserDashboard = ({ navigation }) => {
               ["Soru" + (i + 1)]: data.questions[i],
               ["Cevap" + (i + 1)]: data.answers[i]
             }, { merge: true })
+          if (i == data.answers.length - 1) {
+            if (data.signatureAndLocation.location) {
+              await firebase.firestore()
+                .collection('Reports')
+                .doc(data.currentUser.data().name + " " + data.currentUser.data().surname + " " + data.currentUser.data().identityNumber)
+                .collection("Reports")
+                .doc(currentTime.toUTCString() + ' Tarihli Rapor')
+                .set({
+                  Adres: address
+                }, { merge: true })
+            }
+            if (data.signatureAndLocation.signature) {
+
+            }
+          }
         }
         Alert.alert(
           'Teşekkürler',
@@ -132,7 +164,7 @@ const UserDashboard = ({ navigation }) => {
       navigation.navigate('CameraScreenPhoto')
       data.answers[index] = " Fotoğraf Cihaza Kaydedildi "
     }
-    data.answerCounter.push('')
+    data.answerCount.push('')
   }
   function setVideoAnswer(index) {
     if (data.answerMethods[index].text || data.answerMethods[index].photo || data.answerMethods[index].voice) {
@@ -145,7 +177,7 @@ const UserDashboard = ({ navigation }) => {
       navigation.navigate('CameraScreenVideo'),
         data.answers[index] = " - Video Cihaza Kaydedildi -"
     }
-    data.answerCounter.push('')
+    data.answerCount.push('')
   }
   function setVoiceAnswer(index) {
     if (data.answerMethods[index].text || data.answerMethods[index].photo || data.answerMethods[index].video) {
@@ -158,10 +190,24 @@ const UserDashboard = ({ navigation }) => {
       navigation.navigate('AudioRecordScreen')
       data.answers[index] = " - Ses Kaydı Cihaza Kaydedildi -"
     }
-    data.answerCounter.push('')
+    data.answerCount.push('')
   }
   function TextInputCounter() {
-    data.answerCounter.push('')
+    data.answerCount.push('')
+  }
+  function locationCounter() {
+    data.answerCount.push('')
+    console.log('girdim')
+  }
+  async function getSignatureAndLocationInformations() {
+    const signatureAndLocation = await firebase.firestore().collection('SignatureAndLocationInformation')
+      .doc("Informations").get()
+    data.signatureAndLocation.location = signatureAndLocation.data().location
+    data.signatureAndLocation.signature = signatureAndLocation.data().signature
+    setData({
+      ...data,
+      signatureAndLocation: data.signatureAndLocation
+    })
   }
   function QuestionForm(index) {
     if (data.answerMethods[index].text == true) {
@@ -234,6 +280,32 @@ const UserDashboard = ({ navigation }) => {
           </View>
         )
     }
+    if (index == data.questions.length - 1) {
+      if (data.signatureAndLocation.signature || data.signatureAndLocation.location) {
+        data.forms.push(
+          <Card style={{ flex: 1, width: "100%", marginTop: "2%" }} key={index}>
+            <View style={{ flex: 1 }}>
+              <Card.Title title={"İmza ve Konum Bilgisi"} />
+            </View>
+            <Card.Content>
+              <View style={{ flex: 1, flexDirection: "row" }}>
+                <View style={{ flex: 1, marginTop: "2%", marginRight: "1%" }}>
+                  {data.signatureAndLocation.signature ? <Button mode="outlined" style={{ backgroundColor: "lime" }} >
+                    İmza Ekle
+                  </Button> : <Button mode="outlined" disabled="true" style={{ backgroundColor: "gray" }} >
+                    İmza Ekleme Gerekli Değil
+                  </Button>}
+                  {data.signatureAndLocation.location ?
+                    <LocationDetector locationCounter={locationCounter} /> : <Button mode="outlined" disabled="true" style={{ backgroundColor: "gray" }} >
+                      Konum Ekleme Gerekli Değil
+                  </Button>}
+                </View>
+              </View>
+            </Card.Content>
+          </Card>
+        )
+      }
+    }
   }
   const CallCreateQuestionForm = () => {
     if (data.questions.length > 0 && data.forms.length != data.questions.length) {
@@ -263,14 +335,15 @@ const UserDashboard = ({ navigation }) => {
         Raporlama
     </Paragraph>
       {data.forms}
-      <View
+
+      {/* <View
         style={{
           borderWidth: 0.5,
           borderColor: 'gray',
           margin: 10,
           width: "100%"
         }}
-      />
+      /> */}
       <Button mode="contained" style={{ marginTop: "4%" }} onPress={sendReport}>
         Cevapları Gönder
     </Button>
