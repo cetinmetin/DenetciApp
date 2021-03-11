@@ -1,5 +1,5 @@
 import React from 'react'
-import { Provider } from 'react-native-paper'
+import { ThemeProvider } from 'react-native-paper'
 import { NavigationContainer } from '@react-navigation/native'
 import { createStackNavigator } from '@react-navigation/stack'
 import firebase from 'firebase/app'
@@ -17,14 +17,19 @@ import {
   UserReportDashboard,
   CameraScreenPhoto,
   CameraScreenVideo,
-  AudioRecordScreen,
+  AudioRecordScreen
 } from './src/screens'
 import { FIREBASE_CONFIG } from './src/core/config'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-const Tab = createBottomTabNavigator();
+import { Provider } from 'react-redux'
+import { createStore } from 'redux'
+import { reducer } from './src/reducers/reducer'
 
+const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator()
+const store = createStore(reducer)
+
 if (!firebase.apps.length) {
   firebase.initializeApp(FIREBASE_CONFIG)
 }
@@ -88,32 +93,34 @@ function UserTabNavigator() {
 }
 const App = () => {
   return (
-    <Provider theme={theme}>
-      <NavigationContainer>
-        <Stack.Navigator
-          initialRouteName="AuthLoadingScreen"
-          screenOptions={{
-            headerShown: false,
-          }}
-        >
-          <Stack.Screen
-            name="AuthLoadingScreen"
-            component={AuthLoadingScreen}
-          />
-          <Stack.Screen name="StartScreen" component={StartScreen} />
-          <Stack.Screen name="LoginScreen" component={LoginScreen} />
-          <Stack.Screen name="RegisterScreen" component={RegisterScreen} />
-          <Stack.Screen name="Dashboard" component={UserTabNavigator} />
-          <Stack.Screen name="AdminDashboard" component={AdminTabNavigator} />
-          <Stack.Screen name="CameraScreenPhoto" component={CameraScreenPhoto} />
-          <Stack.Screen name="CameraScreenVideo" component={CameraScreenVideo} />
-          <Stack.Screen name="AudioRecordScreen" component={AudioRecordScreen} />
-          <Stack.Screen
-            name="ForgotPasswordScreen"
-            component={ForgotPasswordScreen}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
+    <Provider store={store}>
+      <ThemeProvider theme={theme}>
+        <NavigationContainer>
+          <Stack.Navigator
+            initialRouteName="AuthLoadingScreen"
+            screenOptions={{
+              headerShown: false,
+            }}
+          >
+            <Stack.Screen
+              name="AuthLoadingScreen"
+              component={AuthLoadingScreen}
+            />
+            <Stack.Screen name="StartScreen" component={StartScreen} />
+            <Stack.Screen name="LoginScreen" component={LoginScreen} />
+            <Stack.Screen name="RegisterScreen" component={RegisterScreen} />
+            <Stack.Screen name="Dashboard" component={UserTabNavigator} />
+            <Stack.Screen name="AdminDashboard" component={AdminTabNavigator} />
+            <Stack.Screen name="CameraScreenPhoto" component={CameraScreenPhoto} />
+            <Stack.Screen name="CameraScreenVideo" component={CameraScreenVideo} />
+            <Stack.Screen name="AudioRecordScreen" component={AudioRecordScreen} />
+            <Stack.Screen
+              name="ForgotPasswordScreen"
+              component={ForgotPasswordScreen}
+            />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </ThemeProvider>
     </Provider>
   )
 }
