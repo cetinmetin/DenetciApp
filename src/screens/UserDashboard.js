@@ -13,6 +13,7 @@ import "firebase/firestore";
 import { Card } from 'react-native-paper';
 import Checkbox from 'expo-checkbox';
 import LocationDetector from '../components/LocationDetector'
+import SignatureCapture from '../components/SignatureCapture'
 import { useSelector, useDispatch } from 'react-redux'
 
 const UserDashboard = ({ navigation }) => {
@@ -95,7 +96,6 @@ const UserDashboard = ({ navigation }) => {
     try {
       var currentTime = new Date()
       currentTime.setHours(currentTime.getHours() + 3)
-      answerCounter()
       if (data.answerCount.length >= answerCounter()) {
         for (let i = 0; i < data.answers.length; i++) {
           //veritabanında field oluşturma
@@ -197,7 +197,9 @@ const UserDashboard = ({ navigation }) => {
   }
   function locationCounter() {
     data.answerCount.push('')
-    console.log('girdim')
+  }
+  function signatureCounter() {
+    data.answerCount.push('')
   }
   async function getSignatureAndLocationInformations() {
     const signatureAndLocation = await firebase.firestore().collection('SignatureAndLocationInformation')
@@ -290,9 +292,7 @@ const UserDashboard = ({ navigation }) => {
             <Card.Content>
               <View style={{ flex: 1, flexDirection: "row" }}>
                 <View style={{ flex: 1, marginTop: "2%", marginRight: "1%" }}>
-                  {data.signatureAndLocation.signature ? <Button mode="outlined" style={{ backgroundColor: "lime" }} >
-                    İmza Ekle
-                  </Button> : <Button mode="outlined" disabled="true" style={{ backgroundColor: "gray" }} >
+                  {data.signatureAndLocation.signature ? <SignatureCapture signatureCounter={signatureCounter} /> : <Button mode="outlined" disabled="true" style={{ backgroundColor: "gray" }} >
                     İmza Ekleme Gerekli Değil
                   </Button>}
                   {data.signatureAndLocation.location ?
