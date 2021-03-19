@@ -1,24 +1,65 @@
 import React, { Component } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from "react-native";
+import { View, Text, TouchableOpacity, Alert, StyleSheet, SafeAreaView } from "react-native";
 import { Camera } from 'expo-camera'
 import * as MediaLibrary from 'expo-media-library';
 import * as Permissions from 'expo-permissions';
 import { Audio, Video } from 'expo-av';
+import BackButton from '../components/BackButton'
 
-class MyCam extends Component {
+class CameraScreenVideo extends Component {
     state = {
         video: null,
         picture: null,
-        recording: false
+        recording: false,
+        showCamera: false
     };
-
+    askPermissionsForRecordingVideo = async () => {
+        let cameraPermission = await Permissions.askAsync(Permissions.CAMERA)
+        let cameraRollPermission = await Permissions.askAsync(Permissions.CAMERA_ROLL)
+        let audioRecordingPermission = await Permissions.askAsync(Permissions.AUDIO_RECORDING)
+            .then(
+                await Audio.setAudioModeAsync({
+                    allowsRecordingIOS: true,
+                    playsInSilentModeIOS: true,
+                })
+            )
+        if (cameraPermission.status === "granted" && cameraRollPermission.status === "granted"
+            && audioRecordingPermission.status === "granted") {
+            this.setState({ showCamera: true })
+        }
+        else {
+            this.setState({ showCamera: false })
+        }
+    };
+    componentDidMount() {
+        this.askPermissionsForRecordingVideo();
+    }
+    componentWillUnmount() {
+        this.setState({
+            video: null,
+            picture: null,
+            recording: false,
+            showCamera: false
+        });
+    }
     saveVideo = async () => {
         const { video } = this.state;
         const asset = await MediaLibrary.saveToLibraryAsync(video.uri);
         if (asset) {
             this.setState({ video: null });
         }
-        alert("Video Galeriye Kaydedildi")
+
+        Alert.alert(
+            'İşlem Başarılı',
+            'Video Kaydedildi',
+            [
+                {
+                    text: 'Tamam',
+                    onPress: () => { this.props.navigation.goBack() }
+                },
+            ],
+            { cancelable: false }
+        )
     };
 
     stopRecord = async () => {
@@ -47,7 +88,23 @@ class MyCam extends Component {
     };
 
     render() {
-        const { recording, video } = this.state;
+        if (!this.state.showCamera) {
+            return (
+                <View style={styles.noPermissions}>
+                    <BackButton goBack={this.props.navigation.goBack} />
+                    <View />
+                    <Text
+                        style={
+                            styles.noPermissionsText
+                        }
+                    >
+                        Uygulamayı Kullanabilmeye Devam Etmek için Gerekli İzinleri Vermeniz Gerekiyor
+          </Text>
+                    <View />
+                </View>
+            );
+        }
+        const { recording, video } = this.state
         return (
             <Camera
                 ref={cam => (this.cam = cam)}
@@ -74,16 +131,16 @@ class MyCam extends Component {
                         backgroundColor: "transparent"
                     }}
                 >
-                        <Text style={{ textAlign: "center" }}></Text>
-                    </TouchableOpacity>}
+                    <Text style={{ textAlign: "center" }}></Text>
+                </TouchableOpacity>}
                 {recording ? (
                     <View style={styles.recordIndicatorContainer}>
                         <View style={styles.recordDot} />
                         <Text style={styles.recordTitle}>{"Kaydediliyor..."}</Text>
                     </View>
                 ) : <View style={styles.recordIndicatorContainer}>
-                        <Text style={styles.recordTitle}>{""}</Text>
-                    </View>}
+                    <Text style={styles.recordTitle}>{""}</Text>
+                </View>}
                 <TouchableOpacity
                     onPress={this.toogleRecord}
                     style={{
@@ -101,49 +158,21 @@ class MyCam extends Component {
     }
 }
 
-class CameraScreenVideo extends Component {
-    state = {
-        showCamera: false
-    };
-    showCamera = async () => {
-        let status = "denied"
-        await Camera.requestPermissionsAsync()
-            .then(
-                await Audio.requestPermissionsAsync()
-                    .then(
-                        await Audio.setAudioModeAsync({
-                            allowsRecordingIOS: true,
-                            playsInSilentModeIOS: true,
-                        })
-                    )
-                    .then(
-                        status = "granted"
-                    )
-            )
-        if (status === "granted") {
-            this.setState({ showCamera: true });
-        }
-    };
-
-    render() {
-        return (
-            <View
-                style={{
-                    justifyContent: "center",
-                    alignItems: "center",
-                    flex: 1,
-                    width: "100%"
-                }}
-            >
-                <MyCam />
-            </View>
-        );
-    }
-}
-
 const styles = StyleSheet.create({
     container: {
         ...StyleSheet.absoluteFillObject,
+    },
+    noPermissions: {
+        flex: 1,
+        flexDirection: "column",
+        justifyContent: "space-between",
+        alignItems: "center",
+        alignSelf: "stretch",
+    },
+    noPermissionsText: {
+        textAlign: "center",
+        justifyContent: "center",
+        alignSelf: "center"
     },
     recordIndicatorContainer: {
         flexDirection: "row",

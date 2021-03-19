@@ -89,11 +89,24 @@ export default class AudioRecordScreen extends React.Component<Props, State>{
         // })();
         this.askForPermission();
     }
+
     componentWillUnmount() {
-        this.setState({
-            isLoading: true,
-        });
+        this.closeAllAndUnmountComponent()
     }
+
+    private async closeAllAndUnmountComponent() {
+        if (this.sound != null && this.state.isPlaying) {
+            await this.sound.stopAsync();
+            this.sound.setOnPlaybackStatusUpdate(null);
+            this.sound = null;
+        }
+        if (this.recording != null && this.state.isRecording) {
+            await this.recording.stopAndUnloadAsync();
+            this.recording.setOnRecordingStatusUpdate(null);
+            this.recording = null;
+        }
+    }
+
     private askForPermission = async () => {
         const response = await Permissions.askAsync(Permissions.AUDIO_RECORDING);
         this.setState({
@@ -353,7 +366,12 @@ export default class AudioRecordScreen extends React.Component<Props, State>{
                 'İşlem Başarılı',
                 "Ses Cihaza Kaydedildi",
                 [
-                    { text: 'Tamam' },
+                    {
+                        text: 'Tamam',
+                        onPress: () => {
+                            this.props.navigation.goBack()
+                        }
+                    },
                 ],
                 { cancelable: false }
             )
@@ -389,7 +407,6 @@ export default class AudioRecordScreen extends React.Component<Props, State>{
 
         return (
             <View style={styles.container}>
-                <BackButton goBack={this.props.navigation.goBack} />
                 <View
                     style={[
                         styles.halfScreenContainer,
@@ -398,6 +415,7 @@ export default class AudioRecordScreen extends React.Component<Props, State>{
                         },
                     ]}
                 >
+                    <BackButton goBack={this.props.navigation.goBack} />
                     <View />
                     <View style={styles.recordingContainer}>
                         <View />

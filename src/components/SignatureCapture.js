@@ -57,7 +57,7 @@ const SignatureCapture = ({ signatureCounter }) => {
     <View style={styles.centeredView}>
       <Modal
         animationType="slide"
-        transparent={true}
+        transparent={false}
         visible={modalVisible}
         onRequestClose={() => {
           setModalVisible(!modalVisible);
@@ -68,9 +68,9 @@ const SignatureCapture = ({ signatureCounter }) => {
             onChange={signaturePadChange}
             style={{ flex: 1, backgroundColor: 'white' }} />
           <CloseButton close={() => { setModalVisible(false) }} />
-          <Text style={{ alignSelf: "center", bottom: "90%", color: "gray", fontSize: 30 }}>IMZA ALANI</Text>
-        </View>
+          <Text style={{ alignSelf: "center", bottom: "80%", color: "gray", fontSize: 30 }}>IMZA ALANI</Text>
         <Button mode="outlined" onPress={saveSignature} style={{ backgroundColor: "lime" }}>İmzayı Kaydet</Button>
+        </View>
       </Modal>
       <Button mode="outlined" onPress={() => { setModalVisible(true) }} style={{ backgroundColor: "lime" }}>İmza Ekle</Button>
     </View>
