@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { View, StyleSheet, TouchableOpacity, TouchableHighlight, Keyboard, Text } from 'react-native'
+import { View, StyleSheet, TouchableOpacity, TouchableHighlight, Keyboard, Text, Alert } from 'react-native'
 import Background from '../components/Background'
 import Logo from '../components/Logo'
 import Header from '../components/Header'
@@ -69,9 +69,17 @@ const AdminDashboard = () => {
             video: data.answerMethods[i].video
           });
       }
+      Alert.alert(
+        'İşlem Başarılı',
+        'Sorular Güncellendi',
+        [
+          { text: 'Tamam' },
+        ],
+        { cancelable: false }
+      )
       getQuestions()
     } catch (e) {
-      alert("Soru Güncelleme Sırasında Hata Oluştu - " + e)
+      alert("Soru Güncelleme Sırasında Hata Oluştu, Lütfen Tüm Alanları Eksiksiz Doldurun")
     }
   }
   function questionInputChange(val, index) {
@@ -173,7 +181,7 @@ const AdminDashboard = () => {
   }
   function QuestionForm(index) {
     return (
-      <Card style={{ flex: 1, width: "100%", marginTop: "2%", backgroundColor: data.status[index] ? "" : "tomato" }} key={index}>
+      <Card style={{ flex: 1, width: "100%", marginTop: "2%", backgroundColor: data.status[index] ? "white" : "tomato" }} key={index}>
         <View style={{ flexDirection: "row" }}>
           <View style={{ flex: 1 }}>
             <Card.Title title={"Soru " + (index + 1)} />
@@ -190,6 +198,7 @@ const AdminDashboard = () => {
               checkMarkColor={"white"}
               checkPosition={"right"}
               checkboxContainerStyle={{ padding: 0, margin: 0 }}
+              animationType={false}
             />
           </View>
           <View style={{ flex: 0.25, marginTop: "4%", marginRight: "1%" }}>
@@ -248,6 +257,7 @@ const AdminDashboard = () => {
                 checkMarkSize={20}
                 checkMarkColor={"white"}
                 checkboxContainerStyle={{ padding: 0, margin: 0 }}
+                animationType={false}
               />
               <Checkbox
                 label="Fotoğraf"
@@ -258,6 +268,7 @@ const AdminDashboard = () => {
                 checkMarkSize={20}
                 checkMarkColor={"white"}
                 checkboxContainerStyle={{ padding: 0, margin: 0 }}
+                animationType={false}
               />
             </View>
             <View style={{ flex: 1, marginTop: "2%", alignItems: "center" }}>
@@ -272,6 +283,7 @@ const AdminDashboard = () => {
                 checkboxContainerStyle={{ padding: 0, margin: 0 }}
                 containerStyle={{ width: "63%" }}
                 checkPosition={"right"}
+                animationType={false}
               />
               <Checkbox
                 label="Video"
@@ -284,6 +296,7 @@ const AdminDashboard = () => {
                 checkboxContainerStyle={{ padding: 0, margin: 0 }}
                 containerStyle={{ width: "63%" }}
                 checkPosition={"right"}
+                animationType={false}
               />
             </View>
           </View>
@@ -309,6 +322,7 @@ const AdminDashboard = () => {
                 checkMarkSize={20}
                 checkMarkColor={"white"}
                 checkboxContainerStyle={{ padding: 0, margin: 0 }}
+                animationType={false}
               />
               <Checkbox
                 label="Konum Gerekli"
@@ -319,6 +333,7 @@ const AdminDashboard = () => {
                 checkMarkSize={20}
                 checkMarkColor={"white"}
                 checkboxContainerStyle={{ padding: 0, margin: 0 }}
+                animationType={false}
               />
             </View>
           </View>
