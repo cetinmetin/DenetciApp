@@ -96,33 +96,36 @@ const UserDashboard = ({ navigation }) => {
     try {
       var currentTime = new Date()
       currentTime.setHours(currentTime.getHours() + 3)
+      var reportDB = await firebase.firestore()
+        .collection('Reports')
+        .doc(data.currentUser.data().name + " " + data.currentUser.data().surname + " " + data.currentUser.data().identityNumber)
+        .collection("Reports")
+        .doc(currentTime.toUTCString() + ' Tarihli Rapor')
       if (data.answerCount.length >= answerCounter()) {
-        for (let i = 0; i < data.answers.length; i++) {
-          //veritabanında field oluşturma
-          await firebase.firestore()
-            .collection('Reports')
-            .doc(data.currentUser.data().name + " " + data.currentUser.data().surname + " " + data.currentUser.data().identityNumber)
-            .set({ isim: data.currentUser.data().name })
+        //veritabanında field oluşturma
+        await firebase.firestore()
+          .collection('Reports')
+          .doc(data.currentUser.data().name + " " + data.currentUser.data().surname + " " + data.currentUser.data().identityNumber)
+          .set({ isim: data.currentUser.data().name })
+        for (let i = 0; i < data.questions.length; i++) {
           //field oluşturduktan sonra raporu günderme
-          await firebase.firestore()
-            .collection('Reports')
-            .doc(data.currentUser.data().name + " " + data.currentUser.data().surname + " " + data.currentUser.data().identityNumber)
-            .collection("Reports")
-            .doc(currentTime.toUTCString() + ' Tarihli Rapor')
-            .set({
-              ["Soru" + (i + 1)]: data.questions[i],
-              ["Cevap" + (i + 1)]: data.answers[i]
-            }, { merge: true })
-          if (i == data.answers.length - 1) {
+          if (i == 0) {
+            reportDB.set({
+              ["Soru"]: firebase.firestore.FieldValue.arrayUnion(data.questions[i]),
+              ["Cevap"]: firebase.firestore.FieldValue.arrayUnion(data.answers[i])
+            })
+          }
+          else {
+            reportDB.update({
+              ["Soru"]: firebase.firestore.FieldValue.arrayUnion(data.questions[i]),
+              ["Cevap"]: firebase.firestore.FieldValue.arrayUnion(data.answers[i])
+            })
+          }
+          if (i == data.questions.length - 1) {
             if (data.signatureAndLocation.location) {
-              await firebase.firestore()
-                .collection('Reports')
-                .doc(data.currentUser.data().name + " " + data.currentUser.data().surname + " " + data.currentUser.data().identityNumber)
-                .collection("Reports")
-                .doc(currentTime.toUTCString() + ' Tarihli Rapor')
-                .set({
-                  Adres: address
-                }, { merge: true })
+              reportDB.set({
+                Adres: address
+              }, { merge: true })
             }
             if (data.signatureAndLocation.signature) {
 
