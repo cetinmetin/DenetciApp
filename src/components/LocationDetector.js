@@ -8,6 +8,7 @@ import Button from '../components/Button'
 import TextInput from '../components/TextInput'
 import { useSelector, useDispatch } from 'react-redux'
 import CloseButton from '../components/CloseButton'
+import GLOBAL from '../globalStates/global'
 
 const LocationDetector = ({ navigation, locationCounter }) => {
     const [location, setLocation] = useState(null);
@@ -21,10 +22,7 @@ const LocationDetector = ({ navigation, locationCounter }) => {
     const [modalVisible, setModalVisible] = useState(false);
     const [streetAndNumber, setStreetAndNumber] = useState({ value: '' });
 
-    let address = useSelector(state => {
-        return state
-    })
-    const dispatch = useDispatch()
+    let address;
 
     useEffect(() => {
         getLocation();
@@ -74,7 +72,7 @@ const LocationDetector = ({ navigation, locationCounter }) => {
     }
     const completeAddress = () => {
         if (streetAndNumber.value.length > 0) {
-            dispatch({ type: 'update', payload: address + ' Sokak/Taksim - Bina NO: ' + streetAndNumber.value })
+            GLOBAL.address = address + ' Sokak/Taksim - Bina NO: ' + streetAndNumber.value
             setModalVisible(false)
             setStreetAndNumber({ value: '' })
             locationCounter()

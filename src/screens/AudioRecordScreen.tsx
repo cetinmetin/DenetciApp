@@ -14,6 +14,7 @@ import * as Permissions from "expo-permissions";
 import * as Icons from "../components/AudioRecordScreen/Icons";
 import * as MediaLibrary from 'expo-media-library';
 import BackButton from '../components/BackButton'
+import GLOBAL from '../globalStates/global'
 
 const { width: DEVICE_WIDTH, height: DEVICE_HEIGHT } = Dimensions.get("window");
 const BACKGROUND_COLOR = "#FFF8ED";
@@ -362,6 +363,8 @@ export default class AudioRecordScreen extends React.Component<Props, State>{
         try {
             const info = await FileSystem.getInfoAsync(this.recording.getURI() || "");
             await MediaLibrary.saveToLibraryAsync(info.uri);
+            GLOBAL.audioUri.push(info.uri)
+            console.log(info.uri)
             Alert.alert(
                 'İşlem Başarılı',
                 "Ses Cihaza Kaydedildi",

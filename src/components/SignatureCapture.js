@@ -7,7 +7,7 @@ import CloseButton from '../components/CloseButton'
 import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from "expo-file-system";
 import * as Permissions from 'expo-permissions';
-
+import GLOBAL from '../globalStates/global'
 
 const SignatureCapture = ({ signatureCounter }) => {
   const [modalVisible, setModalVisible] = useState(false);
@@ -32,6 +32,7 @@ const SignatureCapture = ({ signatureCounter }) => {
         encoding: FileSystem.EncodingType.Base64,
       });
       await MediaLibrary.saveToLibraryAsync(filename);
+      GLOBAL.signature = filename
       signatureCounter()
       setModalVisible(false)
       Alert.alert(
@@ -69,7 +70,7 @@ const SignatureCapture = ({ signatureCounter }) => {
             style={{ flex: 1, backgroundColor: 'white' }} />
           <CloseButton close={() => { setModalVisible(false) }} />
           <Text style={{ alignSelf: "center", bottom: "80%", color: "gray", fontSize: 30 }}>IMZA ALANI</Text>
-        <Button mode="outlined" onPress={saveSignature} style={{ backgroundColor: "lime" }}>İmzayı Kaydet</Button>
+          <Button mode="outlined" onPress={saveSignature} style={{ backgroundColor: "lime" }}>İmzayı Kaydet</Button>
         </View>
       </Modal>
       <Button mode="outlined" onPress={() => { setModalVisible(true) }} style={{ backgroundColor: "lime" }}>İmza Ekle</Button>

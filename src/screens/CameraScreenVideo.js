@@ -5,6 +5,7 @@ import * as MediaLibrary from 'expo-media-library';
 import * as Permissions from 'expo-permissions';
 import { Audio, Video } from 'expo-av';
 import BackButton from '../components/BackButton'
+import GLOBAL from '../globalStates/global'
 
 class CameraScreenVideo extends Component {
     state = {
@@ -45,6 +46,7 @@ class CameraScreenVideo extends Component {
     saveVideo = async () => {
         const { video } = this.state;
         const asset = await MediaLibrary.saveToLibraryAsync(video.uri);
+        GLOBAL.videoUri.push(video.uri)
         if (asset) {
             this.setState({ video: null });
         }

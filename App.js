@@ -22,13 +22,9 @@ import {
 import { FIREBASE_CONFIG } from './src/core/config'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { Provider } from 'react-redux'
-import { createStore } from 'redux'
-import { reducer } from './src/reducers/reducer'
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator()
-const store = createStore(reducer)
 
 if (!firebase.apps.length) {
   firebase.initializeApp(FIREBASE_CONFIG)
@@ -93,7 +89,6 @@ function UserTabNavigator() {
 }
 const App = () => {
   return (
-    <Provider store={store}>
       <ThemeProvider theme={theme}>
         <NavigationContainer>
           <Stack.Navigator
@@ -121,7 +116,6 @@ const App = () => {
           </Stack.Navigator>
         </NavigationContainer>
       </ThemeProvider>
-    </Provider>
   )
 }
 

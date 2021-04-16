@@ -4,6 +4,9 @@ import { StyleSheet, Text, View, TouchableOpacity, Alert, ImageBackground, Image
 import { Camera } from 'expo-camera'
 import * as MediaLibrary from 'expo-media-library';
 import * as Permissions from 'expo-permissions';
+import * as firebase from 'firebase'
+import { useSelector, useDispatch } from 'react-redux'
+import GLOBAL from '../globalStates/global'
 
 let camera = Camera
 
@@ -40,6 +43,8 @@ export default function CameraScreenPhoto({ navigation }) {
     async function savePhoto() {
         await this.askPermissionsForSavePhoto();
         await MediaLibrary.saveToLibraryAsync(capturedImage.uri)
+        GLOBAL.imageUri.push(capturedImage.uri)
+
         Alert.alert(
             'İşlem Başarılı',
             'Fotoğraf Kaydedildi',
@@ -52,6 +57,7 @@ export default function CameraScreenPhoto({ navigation }) {
             { cancelable: false }
         )
     }
+
     const retakePicture = () => {
         setCapturedImage(null)
         setPreviewVisible(false)
