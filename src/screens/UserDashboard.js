@@ -7,7 +7,8 @@ import Paragraph from '../components/Paragraph'
 import Button from '../components/Button'
 import TextInput from '../components/TextInput'
 import { logoutUser } from '../api/auth-api'
-import firebase from 'firebase/app'
+
+import * as firebase from 'firebase'
 import 'firebase/auth'
 import "firebase/firestore";
 import { Card } from 'react-native-paper';
@@ -15,6 +16,7 @@ import Checkbox from 'expo-checkbox';
 import LocationDetector from '../components/LocationDetector'
 import SignatureCapture from '../components/SignatureCapture'
 import { useSelector, useDispatch } from 'react-redux'
+import GLOBAL from '../globalStates/global'
 
 const UserDashboard = ({ navigation }) => {
   const [data, setData] = React.useState({
@@ -25,10 +27,6 @@ const UserDashboard = ({ navigation }) => {
     currentUser: [],
     answerCount: [],
     signatureAndLocation: { signature: false, location: false },
-  })
-
-  let address = useSelector(state => {
-    return state
   })
 
   async function getQuestions() {
@@ -96,16 +94,17 @@ const UserDashboard = ({ navigation }) => {
     try {
       var currentTime = new Date()
       currentTime.setHours(currentTime.getHours() + 3)
+      var username_surname_identityNumber = data.currentUser.data().name + " " + data.currentUser.data().surname + " " + data.currentUser.data().identityNumber
       var reportDB = await firebase.firestore()
         .collection('Reports')
-        .doc(data.currentUser.data().name + " " + data.currentUser.data().surname + " " + data.currentUser.data().identityNumber)
+        .doc(username_surname_identityNumber)
         .collection("Reports")
         .doc(currentTime.toUTCString() + ' Tarihli Rapor')
       if (data.answerCount.length >= answerCounter()) {
         //veritabanında field oluşturma
         await firebase.firestore()
           .collection('Reports')
-          .doc(data.currentUser.data().name + " " + data.currentUser.data().surname + " " + data.currentUser.data().identityNumber)
+          .doc(username_surname_identityNumber)
           .set({ isim: data.currentUser.data().name })
         for (let i = 0; i < data.questions.length; i++) {
           //field oluşturduktan sonra raporu günderme
@@ -121,14 +120,23 @@ const UserDashboard = ({ navigation }) => {
               ["Cevap"]: firebase.firestore.FieldValue.arrayUnion(data.answers[i])
             })
           }
+          if (data.answerMethods[i].photo) {
+            saveAssetsToFirebase(GLOBAL.imageUri[i], "foto" + (i + 1), currentTime.toUTCString(), username_surname_identityNumber)
+          }
+          if (data.answerMethods[i].video) {
+            saveAssetsToFirebase(GLOBAL.videoUri[i], "video" + (i + 1), currentTime.toUTCString(), username_surname_identityNumber)
+          }
+          if (data.answerMethods[i].voice) {
+            saveAssetsToFirebase(GLOBAL.audioUri[i], "ses" + (i + 1), currentTime.toUTCString(), username_surname_identityNumber)
+          }
           if (i == data.questions.length - 1) {
             if (data.signatureAndLocation.location) {
               reportDB.set({
-                Adres: address
+                Adres: GLOBAL.address
               }, { merge: true })
             }
             if (data.signatureAndLocation.signature) {
-
+              saveAssetsToFirebase(GLOBAL.signature, "imza", currentTime.toUTCString(), username_surname_identityNumber)
             }
           }
         }
@@ -156,43 +164,59 @@ const UserDashboard = ({ navigation }) => {
       alert("Raporlama Başarısız " + e)
     }
   }
+  async function saveAssetsToFirebase(uri, filename, currentTime, user) {
+    try {
+      const response = await fetch(uri)
+      const blob = await response.blob()
+      var ref = firebase.storage().ref().child(user + '/' + currentTime + '/' + filename)
+      ref.put(blob);
+    } catch {
+      Alert.alert('Hata', 'Veriler Veritabanına Yüklenemedi',
+        [
+          { text: 'Tamam' }
+        ],
+        { cancelable: false }
+      )
+    }
+  }
   function setPhotoAnswer(index) {
-    if (data.answerMethods[index].text || data.answerMethods[index].video || data.answerMethods[index].voice) {
+    // if (data.answerMethods[index].text || data.answerMethods[index].video || data.answerMethods[index].voice) {
       navigation.navigate('CameraScreenPhoto')
-      if (data.answers[index] == 'undefined' || data.answers[index] == null)
-        data.answers[index] = []
-      data.answers[index] += " - Fotoğraf Cihaza Kaydedildi - "
-    }
-    else {
-      navigation.navigate('CameraScreenPhoto')
-      data.answers[index] = " Fotoğraf Cihaza Kaydedildi "
-    }
+    //   if (data.answers[index] == 'undefined' || data.answers[index] == null)
+    //     data.answers[index] = []
+    //   data.answers[index] += " - Fotoğraf Cihaza Kaydedildi - "
+
+    // }
+    // else {
+    //   navigation.navigate('CameraScreenPhoto')
+    //   data.answers[index] = " Fotoğraf Cihaza Kaydedildi "
+    // }
     data.answerCount.push('')
   }
   function setVideoAnswer(index) {
-    if (data.answerMethods[index].text || data.answerMethods[index].photo || data.answerMethods[index].voice) {
+    // if (data.answerMethods[index].text || data.answerMethods[index].photo || data.answerMethods[index].voice) {
       navigation.navigate('CameraScreenVideo')
-      if (data.answers[index] == 'undefined' || data.answers[index] == null)
-        data.answers[index] = []
-      data.answers[index] += " - Video Cihaza Kaydedildi -"
-    }
-    else {
-      navigation.navigate('CameraScreenVideo'),
-        data.answers[index] = " - Video Cihaza Kaydedildi -"
-    }
+    //   if (data.answers[index] == 'undefined' || data.answers[index] == null)
+    //     data.answers[index] = []
+    //   data.answers[index] += " - Video Cihaza Kaydedildi -"
+    // }
+    // else {
+    //   navigation.navigate('CameraScreenVideo'),
+    //     data.answers[index] = " - Video Cihaza Kaydedildi -"
+    // }
     data.answerCount.push('')
   }
   function setVoiceAnswer(index) {
-    if (data.answerMethods[index].text || data.answerMethods[index].photo || data.answerMethods[index].video) {
+    // if (data.answerMethods[index].text || data.answerMethods[index].photo || data.answerMethods[index].video) {
       navigation.navigate('AudioRecordScreen')
-      if (data.answers[index] == 'undefined' || data.answers[index] == null)
-        data.answers[index] = []
-      data.answers[index] += " - Ses Kaydı Cihaza Kaydedildi -"
-    }
-    else {
-      navigation.navigate('AudioRecordScreen')
-      data.answers[index] = " - Ses Kaydı Cihaza Kaydedildi -"
-    }
+    //   if (data.answers[index] == 'undefined' || data.answers[index] == null)
+    //     data.answers[index] = []
+    //   data.answers[index] += " - Ses Kaydı Cihaza Kaydedildi -"
+    // }
+    // else {
+    //   navigation.navigate('AudioRecordScreen')
+    //   data.answers[index] = " - Ses Kaydı Cihaza Kaydedildi -"
+    // }
     data.answerCount.push('')
   }
   function TextInputCounter() {
