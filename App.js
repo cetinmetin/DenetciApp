@@ -28,6 +28,7 @@ const Stack = createStackNavigator()
 
 if (!firebase.apps.length) {
   firebase.initializeApp(FIREBASE_CONFIG)
+  firebase.firestore().settings({ experimentalForceLongPolling: true });
 }
 function AdminTabNavigator() {
   return (
