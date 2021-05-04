@@ -69,7 +69,7 @@ export default class AudioRecordScreen extends React.Component<Props, State>{
             volume: 1.0,
             // rate: 1.0,
         };
-        this.recordingSettings = Audio.RECORDING_OPTIONS_PRESET_LOW_QUALITY;
+        this.recordingSettings = Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY;
 
         // UNCOMMENT THIS TO TEST maxFileSize:
         /* this.recordingSettings = {
@@ -106,6 +106,26 @@ export default class AudioRecordScreen extends React.Component<Props, State>{
             this.recording.setOnRecordingStatusUpdate(null);
             this.recording = null;
         }
+        this.recording = null;
+        this.sound = null;
+        this.isSeeking = false;
+        this.shouldPlayAtEndOfSeek = false;
+        this.setState({
+            haveRecordingPermissions: false,
+            isLoading: false,
+            isPlaybackAllowed: false,
+            muted: false,
+            soundPosition: null,
+            soundDuration: null,
+            recordingDuration: null,
+            shouldPlay: false,
+            isPlaying: false,
+            isRecording: false,
+            fontLoaded: false,
+            // shouldCorrectPitch: true,
+            volume: 1.0,
+            // rate: 1.0,
+        });
     }
 
     private askForPermission = async () => {
@@ -362,9 +382,9 @@ export default class AudioRecordScreen extends React.Component<Props, State>{
     private saveAudio = async () => {
         try {
             const info = await FileSystem.getInfoAsync(this.recording.getURI() || "");
+            const questionIndex = this.props.route.params.questionIndex
             await MediaLibrary.saveToLibraryAsync(info.uri);
-            GLOBAL.audioUri.push(info.uri)
-            console.log(info.uri)
+            GLOBAL.audioUri[questionIndex] = (info.uri)
             Alert.alert(
                 'İşlem Başarılı',
                 "Ses Cihaza Kaydedildi",
