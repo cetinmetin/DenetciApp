@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { View, StyleSheet, TouchableOpacity, Keyboard, Text, Alert } from 'react-native'
+import { View, StyleSheet, TouchableOpacity, Keyboard, Text, Alert,ActivityIndicator } from 'react-native'
 import Background from '../components/Background'
 import Logo from '../components/Logo'
 import Header from '../components/Header'
@@ -15,8 +15,8 @@ import { Card } from 'react-native-paper';
 import Checkbox from 'expo-checkbox';
 import LocationDetector from '../components/LocationDetector'
 import SignatureCapture from '../components/SignatureCapture'
-import { useSelector, useDispatch } from 'react-redux'
 import GLOBAL from '../globalStates/global'
+import { theme } from '../core/theme'
 
 const UserDashboard = ({ navigation }) => {
   const [data, setData] = React.useState({
@@ -27,7 +27,11 @@ const UserDashboard = ({ navigation }) => {
     currentUser: [],
     answerCount: [],
     signatureAndLocation: { signature: false, location: false },
+    progress: 0,
+    uploadCounter: 0,
+    assetCounter: []
   })
+  const [uploading, setUploading] = React.useState(false)
 
   async function getQuestions() {
     try {
@@ -36,6 +40,8 @@ const UserDashboard = ({ navigation }) => {
       data.forms = []
       data.answers = []
       data.answerCount = []
+      data.uploadCounter = 0
+      data.assetCounter = []
       var tempQuestions = await firebase.firestore().collection('Questions').orderBy("createdAt", "asc").get()
       data.currentUser = await firebase.firestore().collection('Users').doc(firebase.auth().currentUser.uid).get()
       tempQuestions.docs.map(doc => doc.data().status ? data.questions.push(doc.id) : "");
@@ -121,13 +127,20 @@ const UserDashboard = ({ navigation }) => {
             })
           }
           if (data.answerMethods[i].photo) {
-            saveAssetsToFirebase(GLOBAL.imageUri[i], "foto" + (i + 1), currentTime.toUTCString(), username_surname_identityNumber)
+            saveAssetsToFirebase(GLOBAL.imageUri[i], "photo" + (i + 1), currentTime.toUTCString(), username_surname_identityNumber, "photos")
+            data.assetCounter.push('')
           }
           if (data.answerMethods[i].video) {
-            saveAssetsToFirebase(GLOBAL.videoUri[i], "video" + (i + 1), currentTime.toUTCString(), username_surname_identityNumber)
+            saveAssetsToFirebase(GLOBAL.videoUri[i], "video" + (i + 1), currentTime.toUTCString(), username_surname_identityNumber, "videos")
+            data.assetCounter.push('')
           }
           if (data.answerMethods[i].voice) {
-            saveAssetsToFirebase(GLOBAL.audioUri[i], "ses" + (i + 1), currentTime.toUTCString(), username_surname_identityNumber)
+            saveAssetsToFirebase(GLOBAL.audioUri[i], "audio" + (i + 1), currentTime.toUTCString(), username_surname_identityNumber, "audios")
+            data.assetCounter.push('')
+          }
+          if (data.signatureAndLocation.signature) {
+            saveAssetsToFirebase(GLOBAL.signature, "signature1", currentTime.toUTCString(), username_surname_identityNumber, "signature")
+            data.assetCounter.push('')
           }
           if (i == data.questions.length - 1) {
             if (data.signatureAndLocation.location) {
@@ -135,20 +148,24 @@ const UserDashboard = ({ navigation }) => {
                 Adres: GLOBAL.address
               }, { merge: true })
             }
-            if (data.signatureAndLocation.signature) {
-              saveAssetsToFirebase(GLOBAL.signature, "imza", currentTime.toUTCString(), username_surname_identityNumber)
-            }
           }
         }
-        Alert.alert(
-          'Teşekkürler',
-          'Raporlama Başarılı',
-          [
-            //{ text: 'Cancel', onPress: () => console.log('Cancel Pressed!') },
-            { text: 'Tamam', onPress: getQuestions },
-          ],
-          { cancelable: false }
-        )
+        //yüklenecek asset yok ise raporlamanın tamamlandıgını göster
+        if (data.assetCounter.length == 0) {
+          Alert.alert(
+            'Teşekkürler',
+            'Raporlama Başarılı',
+            [
+              //{ text: 'Cancel', onPress: () => console.log('Cancel Pressed!') },
+              {
+                text: 'Tamam', onPress: () => {
+                  GLOBAL.clearGlobalVariables(), getQuestions()
+                }
+              },
+            ],
+            { cancelable: false }
+          )
+        }
       } else {
         Alert.alert(
           'Hata',
@@ -164,14 +181,52 @@ const UserDashboard = ({ navigation }) => {
       alert("Raporlama Başarısız " + e)
     }
   }
-  async function saveAssetsToFirebase(uri, filename, currentTime, user) {
+  async function saveAssetsToFirebase(uri, filename, currentTime, user, path) {
     try {
+      setUploading(true)
       const response = await fetch(uri)
       const blob = await response.blob()
-      var ref = firebase.storage().ref().child(user + '/' + currentTime + '/' + filename)
-      ref.put(blob);
-    } catch {
-      Alert.alert('Hata', 'Veriler Veritabanına Yüklenemedi',
+      var ref = firebase.storage().ref().child(user + '/' + currentTime + '/' + path + '/' + filename)
+      var uploadTask = ref.put(blob);
+      uploadTask.on('state_changed',
+        (snapshot) => {
+          // data.progress = Math.round(snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        },
+        (error) => {
+          // Handle unsuccessful uploads
+        },
+        () => {
+          data.uploadCounter += 1;
+          setData({
+            ...data,
+            uploadCounter: data.uploadCounter
+          })
+          if (data.uploadCounter == data.assetCounter.length) {
+            Alert.alert(
+              'Teşekkürler',
+              'Raporlama Başarılı',
+              [
+                //{ text: 'Cancel', onPress: () => console.log('Cancel Pressed!') },
+                {
+                  text: 'Tamam', onPress: () => {
+                    GLOBAL.clearGlobalVariables(),
+                      setUploading(false), getQuestions()
+                  }
+                },
+              ],
+              { cancelable: false }
+            )
+          }
+          // Handle successful uploads on complete
+          // For instance, get the download URL: https://firebasestorage.googleapis.com/...
+
+          // uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+          //   console.log('File available at', downloadURL);
+          // });
+        }
+      )
+    } catch (e) {
+      Alert.alert('Hata', 'Bazı Kayıtlar Veritabanına Yüklenemedi - ' + e,
         [
           { text: 'Tamam' }
         ],
@@ -181,7 +236,7 @@ const UserDashboard = ({ navigation }) => {
   }
   function setPhotoAnswer(index) {
     // if (data.answerMethods[index].text || data.answerMethods[index].video || data.answerMethods[index].voice) {
-      navigation.navigate('CameraScreenPhoto')
+    navigation.navigate('CameraScreenPhoto', { questionIndex: index })
     //   if (data.answers[index] == 'undefined' || data.answers[index] == null)
     //     data.answers[index] = []
     //   data.answers[index] += " - Fotoğraf Cihaza Kaydedildi - "
@@ -195,7 +250,7 @@ const UserDashboard = ({ navigation }) => {
   }
   function setVideoAnswer(index) {
     // if (data.answerMethods[index].text || data.answerMethods[index].photo || data.answerMethods[index].voice) {
-      navigation.navigate('CameraScreenVideo')
+    navigation.navigate('CameraScreenVideo', { questionIndex: index })
     //   if (data.answers[index] == 'undefined' || data.answers[index] == null)
     //     data.answers[index] = []
     //   data.answers[index] += " - Video Cihaza Kaydedildi -"
@@ -208,7 +263,7 @@ const UserDashboard = ({ navigation }) => {
   }
   function setVoiceAnswer(index) {
     // if (data.answerMethods[index].text || data.answerMethods[index].photo || data.answerMethods[index].video) {
-      navigation.navigate('AudioRecordScreen')
+    navigation.navigate('AudioRecordScreen', { questionIndex: index })
     //   if (data.answers[index] == 'undefined' || data.answers[index] == null)
     //     data.answers[index] = []
     //   data.answers[index] += " - Ses Kaydı Cihaza Kaydedildi -"
@@ -356,29 +411,41 @@ const UserDashboard = ({ navigation }) => {
   }, [])
   return (
     <Background>
-      <Logo />
-      <Header>Denetçi Ekranı</Header>
-      <Paragraph>
-        Raporlama
-    </Paragraph>
-      {data.forms}
-
-      {/* <View
-        style={{
-          borderWidth: 0.5,
-          borderColor: 'gray',
-          margin: 10,
-          width: "100%"
-        }}
-      /> */}
-      <Button mode="contained" style={{ marginTop: "4%" }} onPress={sendReport}>
-        Cevapları Gönder
-    </Button>
-      <Button mode="outlined" style={{ backgroundColor: "red" }} onPress={logoutUser}>
-        Çıkış Yap
-    </Button>
-    </Background>
+      {uploading ? (
+        <Background>
+          <Logo />
+          <Header>Yükleme İşlemi</Header>
+          <Paragraph>
+            Veriler veritabanına yükleniyor, lütfen yükleme bitene kadar bekleyin...
+          </Paragraph>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Paragraph>{data.uploadCounter}/{data.assetCounter.length} yükleniyor...</Paragraph>
+        </Background>
+      ) : (
+        <Background>
+          <Logo />
+          <Header>Denetçi Ekranı</Header>
+          <Paragraph>
+            Raporlama
+      </Paragraph>
+          {data.forms}
+          <Button mode="contained" style={{ marginTop: "4%" }} onPress={sendReport}>
+            Cevapları Gönder
+      </Button>
+          <Button mode="outlined" style={{ backgroundColor: "red" }} onPress={logoutUser}>
+            Çıkış Yap
+      </Button>
+        </Background>
+      )
+      }
+    </Background >
   )
 }
 
 export default UserDashboard
+
+const styles = StyleSheet.create({
+  progressBarContainer: {
+    marginTop: 20
+  },
+})
