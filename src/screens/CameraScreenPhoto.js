@@ -5,12 +5,11 @@ import { Camera } from 'expo-camera'
 import * as MediaLibrary from 'expo-media-library';
 import * as Permissions from 'expo-permissions';
 import * as firebase from 'firebase'
-import { useSelector, useDispatch } from 'react-redux'
 import GLOBAL from '../globalStates/global'
 
 let camera = Camera
 
-export default function CameraScreenPhoto({ navigation }) {
+export default function CameraScreenPhoto({ navigation, route }) {
 
     const [startCamera, setStartCamera] = React.useState(false)
     const [previewVisible, setPreviewVisible] = React.useState(false)
@@ -28,7 +27,7 @@ export default function CameraScreenPhoto({ navigation }) {
         }
     }
     const takePicture = async () => {
-        const photo = await camera.takePictureAsync()
+        const photo = await camera.takePictureAsync({quality:0.3})
         //console.log(photo)
         setPreviewVisible(true)
         //setStartCamera(false)
@@ -43,7 +42,8 @@ export default function CameraScreenPhoto({ navigation }) {
     async function savePhoto() {
         await this.askPermissionsForSavePhoto();
         await MediaLibrary.saveToLibraryAsync(capturedImage.uri)
-        GLOBAL.imageUri.push(capturedImage.uri)
+        const questionIndex = route.params.questionIndex
+        GLOBAL.imageUri[questionIndex] = (capturedImage.uri)
 
         Alert.alert(
             'İşlem Başarılı',
