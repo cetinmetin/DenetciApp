@@ -1,18 +1,22 @@
 import React, { Component } from "react";
-import { View, Text, TouchableOpacity, Alert, StyleSheet, SafeAreaView } from "react-native";
+import { View, Text, TouchableOpacity, Alert, StyleSheet, SafeAreaView, Modal, ActivityIndicator } from "react-native";
 import { Camera } from 'expo-camera'
 import * as MediaLibrary from 'expo-media-library';
 import * as Permissions from 'expo-permissions';
 import { Audio, Video } from 'expo-av';
 import BackButton from '../components/BackButton'
 import GLOBAL from '../globalStates/global'
+import { theme } from '../core/theme'
+import CountDown from 'react-native-countdown-component';
 
 class CameraScreenVideo extends Component {
     state = {
         video: null,
         picture: null,
         recording: false,
-        showCamera: false
+        showCamera: false,
+        saving: false,
+        countDown: 60
     };
     askPermissionsForRecordingVideo = async () => {
         let cameraPermission = await Permissions.askAsync(Permissions.CAMERA)
@@ -40,13 +44,17 @@ class CameraScreenVideo extends Component {
             video: null,
             picture: null,
             recording: false,
-            showCamera: false
+            showCamera: false,
+            saving: false,
+            countDown: 60
         });
     }
     saveVideo = async () => {
+        this.setState({ saving: true })
         const { video } = this.state;
+        const questionIndex = this.props.route.params.questionIndex
         const asset = await MediaLibrary.saveToLibraryAsync(video.uri);
-        GLOBAL.videoUri.push(video.uri)
+        GLOBAL.videoUri[questionIndex] = (video.uri)
         if (asset) {
             this.setState({ video: null });
         }
@@ -57,7 +65,7 @@ class CameraScreenVideo extends Component {
             [
                 {
                     text: 'Tamam',
-                    onPress: () => { this.props.navigation.goBack() }
+                    onPress: () => { this.props.navigation.goBack(), this.setState({ saving: false }) }
                 },
             ],
             { cancelable: false }
@@ -72,8 +80,11 @@ class CameraScreenVideo extends Component {
 
     startRecord = async () => {
         if (this.cam) {
-            this.setState({ recording: true }, async () => {
-                const video = await this.cam.recordAsync();
+            this.setState({ recording: true, countDown: 60 }, async () => {
+                const video = await this.cam.recordAsync({
+                    quality: Camera.Constants.VideoQuality['480p'],
+                    maxDuration: 60
+                });
                 this.setState({ video });
             });
         }
@@ -106,7 +117,7 @@ class CameraScreenVideo extends Component {
                 </View>
             );
         }
-        const { recording, video } = this.state
+        const { recording, video, saving, countDown } = this.state
         return (
             <Camera
                 ref={cam => (this.cam = cam)}
@@ -115,8 +126,30 @@ class CameraScreenVideo extends Component {
                     alignItems: "center",
                     flex: 1,
                     width: "100%"
-                }}
-            >
+                }}>
+                <CountDown
+                    until={countDown}
+                    firstUntil={countDown}
+                    onFinish={this.stopRecord}
+                    size={30}
+                    style={{ right: '35%', bottom: '65%' }}
+                    digitStyle={{ backgroundColor: '#FFF', fontWeight: 'bold' }}
+                    digitTxtStyle={{ color: 'red' }}
+                    timeToShow={['S']}
+                    timeLabels={{ s: '' }}
+                    running={recording}
+                />
+                <Modal
+                    animationType="slide"
+                    visible={saving}
+                    transparent={true}>
+                    <View style={styles.centeredView}>
+                        <View style={styles.modalView}>
+                            <ActivityIndicator size="large" color={theme.colors.primary} />
+                            <Text style={styles.modalText}>Video Kaydediliyor...</Text>
+                        </View>
+                    </View>
+                </Modal>
                 {!recording && video ? (
                     <TouchableOpacity
                         onPress={this.saveVideo}
@@ -198,6 +231,32 @@ const styles = StyleSheet.create({
         width: 6,
         backgroundColor: "#ff0000",
         marginHorizontal: 5,
+    },
+    centeredView: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        marginTop: 22
+    },
+    modalView: {
+        margin: 20,
+        backgroundColor: "white",
+        borderRadius: 20,
+        padding: 35,
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5
+    },
+    modalText: {
+        marginBottom: 15,
+        textAlign: "center"
     }
+
 })
 export default CameraScreenVideo;
