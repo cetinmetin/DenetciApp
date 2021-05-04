@@ -3,5 +3,14 @@ module.exports = {
     signature: '',
     imageUri: [],
     videoUri: [],
-    audioUri:[]
+    audioUri: [],
+    clearGlobalVariables
 };
+
+function clearGlobalVariables(){
+    this.address = ''
+    this.signature = ''
+    this.imageUri = []
+    this.videoUri = []
+    this.audioUri = []
+}
