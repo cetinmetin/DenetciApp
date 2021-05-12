@@ -106,26 +106,6 @@ export default class AudioRecordScreen extends React.Component<Props, State>{
             this.recording.setOnRecordingStatusUpdate(null);
             this.recording = null;
         }
-        this.recording = null;
-        this.sound = null;
-        this.isSeeking = false;
-        this.shouldPlayAtEndOfSeek = false;
-        this.setState({
-            haveRecordingPermissions: false,
-            isLoading: false,
-            isPlaybackAllowed: false,
-            muted: false,
-            soundPosition: null,
-            soundDuration: null,
-            recordingDuration: null,
-            shouldPlay: false,
-            isPlaying: false,
-            isRecording: false,
-            fontLoaded: false,
-            // shouldCorrectPitch: true,
-            volume: 1.0,
-            // rate: 1.0,
-        });
     }
 
     private askForPermission = async () => {
