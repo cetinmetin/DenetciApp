@@ -73,11 +73,14 @@ const AdminDashboard = () => {
         'İşlem Başarılı',
         'Sorular Güncellendi',
         [
-          { text: 'Tamam' },
+          {
+            text: 'Tamam', onPress: () => {
+              getQuestions()
+            }
+          },
         ],
         { cancelable: false }
       )
-      getQuestions()
     } catch (e) {
       alert("Soru Güncelleme Sırasında Hata Oluştu, Lütfen Tüm Alanları Eksiksiz Doldurun")
     }
@@ -167,17 +170,28 @@ const AdminDashboard = () => {
         location: data.location,
         signature: data.signature
       });
-  }
-  async function getSignatureAndLocationInformations() {
-    const signatureAndLocation = await firebase.firestore().collection('SignatureAndLocationInformation')
-      .doc("Informations").get()
-    data.location = signatureAndLocation.data().location
-    data.signature = signatureAndLocation.data().signature
     setData({
       ...data,
       location: data.location,
       signature: data.signature
     })
+  }
+  async function getSignatureAndLocationInformations() {
+    try {
+      const signatureAndLocation = await firebase.firestore().collection('SignatureAndLocationInformation')
+        .doc("Informations").get()
+      data.location = signatureAndLocation.data().location
+      data.signature = signatureAndLocation.data().signature
+    } catch (e) {
+      Alert.alert(
+        'Hata',
+        'İmza ve Konum Bilgisi Alınırken Hata - ' + e,
+        [
+          { text: 'Tamam' },
+        ],
+        { cancelable: false }
+      )
+    }
   }
   function QuestionForm(index) {
     return (
@@ -355,7 +369,6 @@ const AdminDashboard = () => {
       data.forms.push(QuestionForm(i))
       if (i == (data.questions.length - 1)) {
         try {
-          getSignatureAndLocationInformations()
           data.forms.push(signatureAndLocationInfo(i + 1))
         } catch {
           alert("Konum ve İmza Bilgileri Alınamadı")
@@ -368,6 +381,7 @@ const AdminDashboard = () => {
     })
   }
   useEffect(() => {
+    getSignatureAndLocationInformations()
     getQuestions()
   }, [])
 
