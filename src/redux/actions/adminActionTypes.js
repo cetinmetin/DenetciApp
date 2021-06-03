@@ -1,0 +1,10 @@
+export const TIMESTAMP = 'TIMESTAMP'
+export const QUESTION_DOWN = 'QUESTION_DOWN'
+export const QUESTION_UP = 'QUESTION_UP'
+export const RESET_STATE = 'RESET_STATE'
+
+//AdminReportDashboard Action Types
+export const USERS_WHO_HAVE_REPORTED = 'USERS_WHO_HAVE_REPORTED'
+export const REPORTS = 'REPORTS'
+export const RESET_REPORTS = 'RESET_REPORTS'
+export const USER_INFOS_WHO_HAVE_REPORTED = 'USER_INFOS_WHO_HAVE_REPORTED'

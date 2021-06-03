@@ -5,9 +5,11 @@ import * as MediaLibrary from 'expo-media-library';
 import * as Permissions from 'expo-permissions';
 import { Audio, Video } from 'expo-av';
 import BackButton from '../components/BackButton'
-import GLOBAL from '../globalStates/global'
 import { theme } from '../core/theme'
 import CountDown from 'react-native-countdown-component';
+import { useSelector, useDispatch } from "react-redux";
+import { fillVideoUri, increaseAnswerCounter } from '../redux/actions/userActions'
+import store from '../redux/store'
 
 class CameraScreenVideo extends Component {
     state = {
@@ -26,7 +28,8 @@ class CameraScreenVideo extends Component {
                 await Audio.setAudioModeAsync({
                     allowsRecordingIOS: true,
                     playsInSilentModeIOS: true,
-                })
+                }),
+                store.dispatch(increaseAnswerCounter())
             )
         if (cameraPermission.status === "granted" && cameraRollPermission.status === "granted"
             && audioRecordingPermission.status === "granted") {
@@ -54,7 +57,7 @@ class CameraScreenVideo extends Component {
         const { video } = this.state;
         const questionIndex = this.props.route.params.questionIndex
         const asset = await MediaLibrary.saveToLibraryAsync(video.uri);
-        GLOBAL.videoUri[questionIndex] = (video.uri)
+        store.dispatch(fillVideoUri(questionIndex, video.uri))
         if (asset) {
             this.setState({ video: null });
         }

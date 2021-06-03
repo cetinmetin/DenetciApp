@@ -6,35 +6,52 @@ import Paragraph from '../components/Paragraph'
 import Button from '../components/Button'
 import { logoutUser } from '../api/auth-api'
 import { Collapse, CollapseHeader, CollapseBody, AccordionList } from 'accordion-collapse-react-native';
-import { View, StyleSheet, TouchableOpacity, Keyboard, Text } from 'react-native'
-import firebase from 'firebase/app'
-import 'firebase/auth'
-import "firebase/firestore";
+import { View, StyleSheet, TouchableOpacity, Keyboard, Text, Alert } from 'react-native'
 import { Card } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
+import { getMyReports, getCurrentUser } from '../DBHelper/DbActions'
+import { useSelector, useDispatch } from "react-redux";
+import { resetMyReports } from '../redux/actions/userActions'
+import store from '../redux/store'
 
 const UserReportDashboard = () => {
   const [data, setData] = React.useState({
-    myReports: [],
-    currentUser: [],
-    collapses: [],
+    collapses: []
   })
-  async function getMyReports() {
+
+  const dispatch = useDispatch()
+
+  let myReports;
+
+  store.subscribe(() => {
+    myReports = store.getState().userReducer.myReports
+  })
+
+  async function CallAtFirst() {
     try {
-      data.myReports = []
-      data.currentUser = []
-      data.currentUser = await firebase.firestore().collection('Users').doc(firebase.auth().currentUser.uid).get()
-      var tempMyReports = await firebase.firestore().collection('Reports').doc(data.currentUser.data().name + " " + data.currentUser.data().surname + " " + data.currentUser.data().identityNumber).collection('Reports').get()
-      tempMyReports.docs.map(doc => data.myReports.push(doc));
-      setData({
-        myReports: data.myReports
-      })
-      if (data.myReports.length > 0) {
+      await getMyReports()
+      await getCurrentUser()
+      if (myReports.length > 0) {
         createCollapse()
       }
     } catch (e) {
-      console.log("Raporların Alınması Sırasında Hata " + e)
+      Alert.alert(
+        'Hata',
+        "Raporlar Alınırken Hata Oluştu - " + e,
+        [
+          { text: 'Tamam' },
+        ],
+        { cancelable: false }
+      )
     }
+  }
+  async function reset() {
+    data.collapses = []
+    dispatch(resetMyReports())
+    setData({
+      collapses: data.collapses
+    })
+    await CallAtFirst()
   }
   function collapse(report, index) {
     return (
@@ -56,17 +73,17 @@ const UserReportDashboard = () => {
     )
   }
   function createCollapse() {
-    data.collapses = []
-    for (let i = 0; i < data.myReports.length; i++)
-      data.collapses.push(collapse(data.myReports[i], i))
+    var collapsesTemp = []
+    for (let i = 0; i < myReports.length; i++)
+      collapsesTemp.push(collapse(myReports[i], i))
     setData({
       ...data,
-      collapses: data.collapses
+      collapses: collapsesTemp
     })
   }
   useFocusEffect(
     React.useCallback(() => {
-      getMyReports()
+      reset()
     }, [])
   );
   return (
@@ -77,7 +94,7 @@ const UserReportDashboard = () => {
         Yaptığım Raporlamalar
     </Paragraph>
       {data.collapses}
-      <Button mode="outlined" style={{backgroundColor:"red"}} onPress={logoutUser}>
+      <Button mode="outlined" style={{ backgroundColor: "red" }} onPress={logoutUser}>
         Çıkış Yap
     </Button>
     </Background>

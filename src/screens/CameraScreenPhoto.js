@@ -5,7 +5,8 @@ import { Camera } from 'expo-camera'
 import * as MediaLibrary from 'expo-media-library';
 import * as Permissions from 'expo-permissions';
 import * as firebase from 'firebase'
-import GLOBAL from '../globalStates/global'
+import { useSelector, useDispatch } from "react-redux";
+import { fillImageUri, increaseAnswerCounter } from '../redux/actions/userActions'
 
 let camera = Camera
 
@@ -17,17 +18,19 @@ export default function CameraScreenPhoto({ navigation, route }) {
     const [cameraType, setCameraType] = React.useState(Camera.Constants.Type.back)
     const [flashMode, setFlashMode] = React.useState('off')
 
+    const dispatch = useDispatch()
+
     async function startTheCamera() {
         const { status } = await Camera.requestPermissionsAsync()
-        //console.log(status)
         if (status === 'granted') {
             setStartCamera(true)
+            dispatch(increaseAnswerCounter())
         } else {
             Alert.alert('Access denied')
         }
     }
     const takePicture = async () => {
-        const photo = await camera.takePictureAsync({quality:0.3})
+        const photo = await camera.takePictureAsync({ quality: 0.3 })
         //console.log(photo)
         setPreviewVisible(true)
         //setStartCamera(false)
@@ -43,8 +46,7 @@ export default function CameraScreenPhoto({ navigation, route }) {
         await this.askPermissionsForSavePhoto();
         await MediaLibrary.saveToLibraryAsync(capturedImage.uri)
         const questionIndex = route.params.questionIndex
-        GLOBAL.imageUri[questionIndex] = (capturedImage.uri)
-
+        dispatch(fillImageUri(questionIndex,capturedImage.uri))
         Alert.alert(
             'İşlem Başarılı',
             'Fotoğraf Kaydedildi',

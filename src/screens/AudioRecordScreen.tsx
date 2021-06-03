@@ -14,7 +14,9 @@ import * as Permissions from "expo-permissions";
 import * as Icons from "../components/AudioRecordScreen/Icons";
 import * as MediaLibrary from 'expo-media-library';
 import BackButton from '../components/BackButton'
-import GLOBAL from '../globalStates/global'
+import { useSelector, useDispatch } from "react-redux";
+import { fillAudioUri, increaseAnswerCounter } from '../redux/actions/userActions'
+import store from '../redux/store'
 
 const { width: DEVICE_WIDTH, height: DEVICE_HEIGHT } = Dimensions.get("window");
 const BACKGROUND_COLOR = "#FFF8ED";
@@ -89,6 +91,7 @@ export default class AudioRecordScreen extends React.Component<Props, State>{
         //     this.setState({ fontLoaded: true });
         // })();
         this.askForPermission();
+        store.dispatch(increaseAnswerCounter())
     }
 
     componentWillUnmount() {
@@ -364,7 +367,7 @@ export default class AudioRecordScreen extends React.Component<Props, State>{
             const info = await FileSystem.getInfoAsync(this.recording.getURI() || "");
             const questionIndex = this.props.route.params.questionIndex
             await MediaLibrary.saveToLibraryAsync(info.uri);
-            GLOBAL.audioUri[questionIndex] = (info.uri)
+            store.dispatch(fillAudioUri(questionIndex, info.uri))
             Alert.alert(
                 'İşlem Başarılı',
                 "Ses Cihaza Kaydedildi",

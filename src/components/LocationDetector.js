@@ -8,7 +8,7 @@ import Button from '../components/Button'
 import TextInput from '../components/TextInput'
 import { useSelector, useDispatch } from 'react-redux'
 import CloseButton from '../components/CloseButton'
-import GLOBAL from '../globalStates/global'
+import { increaseAnswerCounter,fillAddress } from '../redux/actions/userActions'
 
 const LocationDetector = ({ navigation, locationCounter }) => {
     const [location, setLocation] = useState(null);
@@ -22,7 +22,9 @@ const LocationDetector = ({ navigation, locationCounter }) => {
     const [modalVisible, setModalVisible] = useState(false);
     const [streetAndNumber, setStreetAndNumber] = useState({ value: '' });
 
-    let address;
+    const dispatch = useDispatch()
+
+    let addressTemp;
 
     useEffect(() => {
         getLocation();
@@ -52,13 +54,13 @@ const LocationDetector = ({ navigation, locationCounter }) => {
 
     };
 
-    address = 'Konum Tespit Ediliyor...'
+    addressTemp = 'Konum Tespit Ediliyor...'
 
     if (errorMsg) {
-        address = errorMsg
+        addressTemp = errorMsg
     }
     else if (location) {
-        address =
+        addressTemp =
             'Şehir: ' +
             city +
             ' Posta Kodu: ' +
@@ -72,10 +74,11 @@ const LocationDetector = ({ navigation, locationCounter }) => {
     }
     const completeAddress = () => {
         if (streetAndNumber.value.length > 0) {
-            GLOBAL.address = address + ' Sokak/Taksim - Bina NO: ' + streetAndNumber.value
+            let completeAddressTemp = addressTemp + ' Sokak/Taksim - Bina NO: ' + streetAndNumber.value
+            dispatch(fillAddress(completeAddressTemp))
             setModalVisible(false)
             setStreetAndNumber({ value: '' })
-            locationCounter()
+            dispatch(increaseAnswerCounter())
         }
         else {
             Alert.alert(
@@ -101,7 +104,7 @@ const LocationDetector = ({ navigation, locationCounter }) => {
                 <View style={styles.centeredView}>
                     <View style={styles.modalView}>
                         <CloseButton close={() => { setModalVisible(false) }} />
-                        <Text style={styles.modalText}>{address}</Text>
+                        <Text style={styles.modalText}>{addressTemp}</Text>
                         <TextInput
                             label="Sokak/Taksim - Bina NO"
                             returnKeyType="next"

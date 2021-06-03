@@ -7,14 +7,16 @@ import CloseButton from '../components/CloseButton'
 import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from "expo-file-system";
 import * as Permissions from 'expo-permissions';
-import GLOBAL from '../globalStates/global'
+import { useSelector, useDispatch } from "react-redux";
+import { increaseAnswerCounter, fillSignatureUri } from '../redux/actions/userActions'
 
-const SignatureCapture = ({ signatureCounter }) => {
+const SignatureCapture = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [newSignature, setNewSignature] = useState(null)
   const signaturePadError = (error) => {
     console.error(error);
   };
+  const dispatch = useDispatch()
 
   const askPermissionsForSavePhoto = async () => {
     await Permissions.askAsync(Permissions.CAMERA);
@@ -32,8 +34,8 @@ const SignatureCapture = ({ signatureCounter }) => {
         encoding: FileSystem.EncodingType.Base64,
       });
       await MediaLibrary.saveToLibraryAsync(filename);
-      GLOBAL.signature = filename
-      signatureCounter()
+      dispatch(fillSignatureUri(filename))
+      dispatch(increaseAnswerCounter())
       setModalVisible(false)
       Alert.alert(
         'İşlem Başarılı',

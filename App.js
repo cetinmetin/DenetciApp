@@ -22,6 +22,8 @@ import {
 import { FIREBASE_CONFIG } from './src/core/config'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import store from './src/redux/store'
+import { Provider } from 'react-redux'
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator()
@@ -90,6 +92,7 @@ function UserTabNavigator() {
 }
 const App = () => {
   return (
+    <Provider store={store}>
       <ThemeProvider theme={theme}>
         <NavigationContainer>
           <Stack.Navigator
@@ -117,6 +120,7 @@ const App = () => {
           </Stack.Navigator>
         </NavigationContainer>
       </ThemeProvider>
+    </Provider>
   )
 }
 

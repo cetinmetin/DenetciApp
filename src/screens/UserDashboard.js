@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { View, StyleSheet, TouchableOpacity, Keyboard, Text, Alert,ActivityIndicator } from 'react-native'
+import { View, StyleSheet, TouchableOpacity, Keyboard, Text, Alert, ActivityIndicator } from 'react-native'
 import Background from '../components/Background'
 import Logo from '../components/Logo'
 import Header from '../components/Header'
@@ -8,309 +8,105 @@ import Button from '../components/Button'
 import TextInput from '../components/TextInput'
 import { logoutUser } from '../api/auth-api'
 
-import * as firebase from 'firebase'
-import 'firebase/auth'
-import "firebase/firestore";
 import { Card } from 'react-native-paper';
 import Checkbox from 'expo-checkbox';
 import LocationDetector from '../components/LocationDetector'
 import SignatureCapture from '../components/SignatureCapture'
-import GLOBAL from '../globalStates/global'
 import { theme } from '../core/theme'
+import { getQuestions, getCurrentUser, sendReport, getSignatureAndLocationInformations } from '../DBHelper/DbActions'
+import { useSelector, useDispatch } from "react-redux";
+import { increaseAnswerCounter, resetUserStates, fillAnswers } from '../redux/actions/userActions'
+import store from '../redux/store'
 
 const UserDashboard = ({ navigation }) => {
+
   const [data, setData] = React.useState({
-    questions: [],
     forms: [],
-    answerMethods: [],
-    answers: [],
-    currentUser: [],
     answerCount: [],
-    signatureAndLocation: { signature: false, location: false },
-    progress: 0,
-    uploadCounter: 0,
-    assetCounter: []
+    progress: 0
   })
-  const [uploading, setUploading] = React.useState(false)
 
-  async function getQuestions() {
+  const dispatch = useDispatch()
+
+  let reportUploadingStatus = useSelector((status) => status.userReducer.statusOfUploading)
+  let uploadCounter = useSelector((status) => status.userReducer.counterOfUploads)
+  let assetCounter = useSelector((status) => status.userReducer.counterOfAssetAnswers)
+  let answerCounter = useSelector((status) => status.userReducer.counterOfAnswers)
+
+  let haveSignature, haveLocation, questions, answerMethods
+
+  store.subscribe(() => {
+    haveSignature = store.getState().userReducer.haveSignature
+    haveLocation = store.getState().userReducer.haveLocation
+    questions = store.getState().userReducer.questions
+    answerMethods = store.getState().userReducer.answerMethods
+  })
+
+  async function callAtFirst() {
     try {
-      data.questions = []
-      data.answerMethods = []
-      data.forms = []
-      data.answers = []
-      data.answerCount = []
-      data.uploadCounter = 0
-      data.assetCounter = []
-      var tempQuestions = await firebase.firestore().collection('Questions').orderBy("createdAt", "asc").get()
-      data.currentUser = await firebase.firestore().collection('Users').doc(firebase.auth().currentUser.uid).get()
-      tempQuestions.docs.map(doc => doc.data().status ? data.questions.push(doc.id) : "");
-      tempQuestions.docs.map(doc => doc.data().status ? data.answerMethods.push(doc.data()) : "");
-      data.questions.map(data => setData(previousData => ({ ...previousData, questions: previousData.questions.concat(data) })))
-      data.answerMethods.map(data => setData(previousData => ({ ...previousData, answerMethods: previousData.answerMethods.concat(data) })))
-
-      if (data.questions.length != data.forms.length) {
-        await getSignatureAndLocationInformations()
+      await getQuestions()
+      await getCurrentUser()
+      await getSignatureAndLocationInformations()
+      if (questions.length != data.forms.length) {
         CallCreateQuestionForm()
       }
     } catch (e) {
       Alert.alert(
         'Hata',
-        "Sorular Alınırken Hata Oluştu - " + e,
+        "Uygulama Başlatılırken Hata Oluştu - " + e,
         [
-          //{ text: 'Cancel', onPress: () => console.log('Cancel Pressed!') },
-          { text: 'Tamam', onPress: getQuestions },
+          { text: 'Tamam' },
         ],
         { cancelable: false }
       )
     }
+  }
+  async function reset() {
+    data.forms = []
+    data.answerCount = []
+    data.progress = 0
+    dispatch(resetUserStates())
+    setData({
+      forms: [],
+      answerCount: [],
+      progress: 0
+    })
+    await callAtFirst()
   }
   function answerInputChange(val, index) {
-    if (data.answerMethods[index].photo || data.answerMethods[index].voice || data.answerMethods[index].video) {
-      if (data.answers[index] == 'undefined' || data.answers[index] == null)
-        data.answers[index] = []
-      data.answers[index] += val
-    }
-    else
-      data.answers[index] = val
-    setData({
-      ...data,
-      answers: data.answers,
-    })
-  }
-  function answerCounter() {
-    let counter = 0
-    for (let i = 0; i < data.answerMethods.length; i++) {
-      if (data.answerMethods[i].photo)
-        counter++
-      if (data.answerMethods[i].text)
-        counter++
-      if (data.answerMethods[i].voice)
-        counter++
-      if (data.answerMethods[i].video)
-        counter++
-    }
-    if (data.signatureAndLocation.location)
-      counter++
-    if (data.signatureAndLocation.signature)
-      counter++
-    return counter
-  }
-  async function sendReport() {
-    try {
-      var currentTime = new Date()
-      currentTime.setHours(currentTime.getHours() + 3)
-      var username_surname_identityNumber = data.currentUser.data().name + " " + data.currentUser.data().surname + " " + data.currentUser.data().identityNumber
-      var reportDB = await firebase.firestore()
-        .collection('Reports')
-        .doc(username_surname_identityNumber)
-        .collection("Reports")
-        .doc(currentTime.toUTCString() + ' Tarihli Rapor')
-      if (data.answerCount.length >= answerCounter()) {
-        //veritabanında field oluşturma
-        await firebase.firestore()
-          .collection('Reports')
-          .doc(username_surname_identityNumber)
-          .set({ isim: data.currentUser.data().name })
-        for (let i = 0; i < data.questions.length; i++) {
-          //field oluşturduktan sonra raporu günderme
-          if (i == 0) {
-            reportDB.set({
-              ["Soru"]: firebase.firestore.FieldValue.arrayUnion(data.questions[i]),
-              ["Cevap"]: firebase.firestore.FieldValue.arrayUnion(data.answers[i])
-            })
-          }
-          else {
-            reportDB.update({
-              ["Soru"]: firebase.firestore.FieldValue.arrayUnion(data.questions[i]),
-              ["Cevap"]: firebase.firestore.FieldValue.arrayUnion(data.answers[i])
-            })
-          }
-          if (data.answerMethods[i].photo) {
-            saveAssetsToFirebase(GLOBAL.imageUri[i], "photo" + (i + 1), currentTime.toUTCString(), username_surname_identityNumber, "photos")
-            data.assetCounter.push('')
-          }
-          if (data.answerMethods[i].video) {
-            saveAssetsToFirebase(GLOBAL.videoUri[i], "video" + (i + 1), currentTime.toUTCString(), username_surname_identityNumber, "videos")
-            data.assetCounter.push('')
-          }
-          if (data.answerMethods[i].voice) {
-            saveAssetsToFirebase(GLOBAL.audioUri[i], "audio" + (i + 1), currentTime.toUTCString(), username_surname_identityNumber, "audios")
-            data.assetCounter.push('')
-          }
-          if (data.signatureAndLocation.signature) {
-            saveAssetsToFirebase(GLOBAL.signature, "signature1", currentTime.toUTCString(), username_surname_identityNumber, "signature")
-            data.assetCounter.push('')
-          }
-          if (i == data.questions.length - 1) {
-            if (data.signatureAndLocation.location) {
-              reportDB.set({
-                Adres: GLOBAL.address
-              }, { merge: true })
-            }
-          }
-        }
-        //yüklenecek asset yok ise raporlamanın tamamlandıgını göster
-        if (data.assetCounter.length == 0) {
-          Alert.alert(
-            'Teşekkürler',
-            'Raporlama Başarılı',
-            [
-              //{ text: 'Cancel', onPress: () => console.log('Cancel Pressed!') },
-              {
-                text: 'Tamam', onPress: () => {
-                  GLOBAL.clearGlobalVariables(), getQuestions()
-                }
-              },
-            ],
-            { cancelable: false }
-          )
-        }
-      } else {
-        Alert.alert(
-          'Hata',
-          'Tüm Cevap Seçenekleri Eksiksiz Doldurulmalı',
-          [
-            { text: 'Tamam' },
-          ],
-          { cancelable: false }
-        )
-      }
-    }
-    catch (e) {
-      alert("Raporlama Başarısız " + e)
-    }
-  }
-  async function saveAssetsToFirebase(uri, filename, currentTime, user, path) {
-    try {
-      setUploading(true)
-      const response = await fetch(uri)
-      const blob = await response.blob()
-      var ref = firebase.storage().ref().child(user + '/' + currentTime + '/' + path + '/' + filename)
-      var uploadTask = ref.put(blob);
-      uploadTask.on('state_changed',
-        (snapshot) => {
-          // data.progress = Math.round(snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        },
-        (error) => {
-          // Handle unsuccessful uploads
-        },
-        () => {
-          data.uploadCounter += 1;
-          setData({
-            ...data,
-            uploadCounter: data.uploadCounter
-          })
-          if (data.uploadCounter == data.assetCounter.length) {
-            Alert.alert(
-              'Teşekkürler',
-              'Raporlama Başarılı',
-              [
-                //{ text: 'Cancel', onPress: () => console.log('Cancel Pressed!') },
-                {
-                  text: 'Tamam', onPress: () => {
-                    GLOBAL.clearGlobalVariables(),
-                      setUploading(false), getQuestions()
-                  }
-                },
-              ],
-              { cancelable: false }
-            )
-          }
-          // Handle successful uploads on complete
-          // For instance, get the download URL: https://firebasestorage.googleapis.com/...
-
-          // uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
-          //   console.log('File available at', downloadURL);
-          // });
-        }
-      )
-    } catch (e) {
-      Alert.alert('Hata', 'Bazı Kayıtlar Veritabanına Yüklenemedi - ' + e,
-        [
-          { text: 'Tamam' }
-        ],
-        { cancelable: false }
-      )
-    }
+    dispatch(fillAnswers(val, index))
   }
   function setPhotoAnswer(index) {
-    // if (data.answerMethods[index].text || data.answerMethods[index].video || data.answerMethods[index].voice) {
     navigation.navigate('CameraScreenPhoto', { questionIndex: index })
-    //   if (data.answers[index] == 'undefined' || data.answers[index] == null)
-    //     data.answers[index] = []
-    //   data.answers[index] += " - Fotoğraf Cihaza Kaydedildi - "
-
-    // }
-    // else {
-    //   navigation.navigate('CameraScreenPhoto')
-    //   data.answers[index] = " Fotoğraf Cihaza Kaydedildi "
-    // }
-    data.answerCount.push('')
   }
   function setVideoAnswer(index) {
-    // if (data.answerMethods[index].text || data.answerMethods[index].photo || data.answerMethods[index].voice) {
     navigation.navigate('CameraScreenVideo', { questionIndex: index })
-    //   if (data.answers[index] == 'undefined' || data.answers[index] == null)
-    //     data.answers[index] = []
-    //   data.answers[index] += " - Video Cihaza Kaydedildi -"
-    // }
-    // else {
-    //   navigation.navigate('CameraScreenVideo'),
-    //     data.answers[index] = " - Video Cihaza Kaydedildi -"
-    // }
-    data.answerCount.push('')
   }
   function setVoiceAnswer(index) {
-    // if (data.answerMethods[index].text || data.answerMethods[index].photo || data.answerMethods[index].video) {
     navigation.navigate('AudioRecordScreen', { questionIndex: index })
-    //   if (data.answers[index] == 'undefined' || data.answers[index] == null)
-    //     data.answers[index] = []
-    //   data.answers[index] += " - Ses Kaydı Cihaza Kaydedildi -"
-    // }
-    // else {
-    //   navigation.navigate('AudioRecordScreen')
-    //   data.answers[index] = " - Ses Kaydı Cihaza Kaydedildi -"
-    // }
-    data.answerCount.push('')
   }
   function TextInputCounter() {
-    data.answerCount.push('')
+    dispatch(increaseAnswerCounter())
   }
-  function locationCounter() {
-    data.answerCount.push('')
-  }
-  function signatureCounter() {
-    data.answerCount.push('')
-  }
-  async function getSignatureAndLocationInformations() {
-    const signatureAndLocation = await firebase.firestore().collection('SignatureAndLocationInformation')
-      .doc("Informations").get()
-    data.signatureAndLocation.location = signatureAndLocation.data().location
-    data.signatureAndLocation.signature = signatureAndLocation.data().signature
-    setData({
-      ...data,
-      signatureAndLocation: data.signatureAndLocation
-    })
-  }
+
   function QuestionForm(index) {
-    if (data.answerMethods[index].text == true) {
+    if (answerMethods[index].text == true) {
       data.forms.push(
         <View style={{ width: "100%", marginTop: "1%" }} key={index + " Text"}>
           <Text>
-            Soru {(index + 1)}: {data.questions[index]}
+            Soru {(index + 1)}: {questions[index]}
           </Text>
           <TextInput
             placeholder="Cevabınız"
             key={index}
             //onChangeText={(text) => answerInputChange(text, index)}
-            onEndEditing={(e) => { answerInputChange(e.nativeEvent.text, index); TextInputCounter() }}
+            onEndEditing={(e) => { e.nativeEvent.text.length > 0 && TextInputCounter(); answerInputChange(e.nativeEvent.text, index); }}
           />
         </View>
       )
     }
-    if (data.answerMethods[index].photo == true) {
-      data.answerMethods[index].text ? data.forms.push(
+    if (answerMethods[index].photo == true) {
+      answerMethods[index].text ? data.forms.push(
         <View style={{ width: "100%" }} key={index + " Photo"}>
           <Button mode="outlined" style={{ backgroundColor: "lightblue" }} key={index + " Photo"} onPress={() => setPhotoAnswer(index)}>
             Fotoğraf Çek
@@ -319,7 +115,7 @@ const UserDashboard = ({ navigation }) => {
         data.forms.push(
           <View style={{ width: "100%", marginTop: "1%" }} key={index + " Photo"}>
             <Text>
-              Soru {(index + 1)}: {data.questions[index]}
+              Soru {(index + 1)}: {questions[index]}
             </Text>
             <Button mode="outlined" style={{ backgroundColor: "lightblue" }} key={index + " Photo"} onPress={() => setPhotoAnswer(index)}>
               Fotoğraf Çek
@@ -327,8 +123,8 @@ const UserDashboard = ({ navigation }) => {
           </View>
         )
     }
-    if (data.answerMethods[index].voice == true) {
-      data.answerMethods[index].text || data.answerMethods[index].photo ? data.forms.push(
+    if (answerMethods[index].voice == true) {
+      answerMethods[index].text || answerMethods[index].photo ? data.forms.push(
         <View style={{ width: "100%" }} key={index + " Voice"}>
           <Button mode="outlined" style={{ backgroundColor: "lightblue" }} key={index + " Voice"} onPress={() => setVoiceAnswer(index)}>
             Ses Kaydet
@@ -337,7 +133,7 @@ const UserDashboard = ({ navigation }) => {
         data.forms.push(
           <View style={{ width: "100%", marginTop: "1%" }} key={index + " Voice"}>
             <Text>
-              Soru {(index + 1)}: {data.questions[index]}
+              Soru {(index + 1)}: {questions[index]}
             </Text>
             <Button mode="outlined" style={{ backgroundColor: "lightblue" }} key={index + " Voice"} onPress={() => setVoiceAnswer(index)}>
               Ses Kaydet
@@ -345,9 +141,9 @@ const UserDashboard = ({ navigation }) => {
           </View>
         )
     }
-    if (data.answerMethods[index].video == true) {
-      data.answerMethods[index].text || data.answerMethods[index].photo
-        || data.answerMethods[index].voice ? data.forms.push(
+    if (answerMethods[index].video == true) {
+      answerMethods[index].text || answerMethods[index].photo
+        || answerMethods[index].voice ? data.forms.push(
           <View style={{ width: "100%" }} key={index + " Video"}>
             <Button mode="outlined" style={{ backgroundColor: "lightblue" }} key={index + " Video"} onPress={() => setVideoAnswer(index)}>
               Video Çek
@@ -356,7 +152,7 @@ const UserDashboard = ({ navigation }) => {
         data.forms.push(
           <View style={{ width: "100%", marginTop: "1%" }} key={index + " Video"}>
             <Text>
-              Soru {(index + 1)}: {data.questions[index]}
+              Soru {(index + 1)}: {questions[index]}
             </Text>
             <Button mode="outlined" style={{ backgroundColor: "lightblue" }} key={index + " Video"} onPress={() => setVideoAnswer(index)}>
               Video Çek
@@ -364,8 +160,8 @@ const UserDashboard = ({ navigation }) => {
           </View>
         )
     }
-    if (index == data.questions.length - 1) {
-      if (data.signatureAndLocation.signature || data.signatureAndLocation.location) {
+    if (index == questions.length - 1) {
+      if (haveSignature || haveLocation) {
         data.forms.push(
           <Card style={{ flex: 1, width: "100%", marginTop: "2%" }} key={index}>
             <View style={{ flex: 1 }}>
@@ -374,13 +170,13 @@ const UserDashboard = ({ navigation }) => {
             <Card.Content>
               <View style={{ flex: 1, flexDirection: "row" }}>
                 <View style={{ flex: 1, marginTop: "2%", marginRight: "1%" }}>
-                  {data.signatureAndLocation.signature ? <SignatureCapture signatureCounter={signatureCounter} /> : <Button mode="outlined" disabled="true" style={{ backgroundColor: "gray" }} >
+                  {haveSignature ? <SignatureCapture /> : <Button mode="outlined" disabled="true" style={{ backgroundColor: "gray" }} >
                     İmza Ekleme Gerekli Değil
                   </Button>}
-                  {data.signatureAndLocation.location ?
-                    <LocationDetector locationCounter={locationCounter} /> : <Button mode="outlined" disabled="true" style={{ backgroundColor: "gray" }} >
+                  {haveLocation ?
+                    <LocationDetector /> : <Button mode="outlined" disabled="true" style={{ backgroundColor: "gray" }} >
                       Konum Ekleme Gerekli Değil
-                  </Button>}
+                 </Button>}
                 </View>
               </View>
             </Card.Content>
@@ -390,16 +186,14 @@ const UserDashboard = ({ navigation }) => {
     }
   }
   const CallCreateQuestionForm = () => {
-    if (data.questions.length > 0 && data.forms.length != data.questions.length) {
-      data.forms = []
+    if (questions.length > 0 && data.forms.length != questions.length) {
       CreateQuestionForm()
     }
     else
-      getQuestions()
+      reset()
   }
   const CreateQuestionForm = () => {
-    data.forms = []
-    for (let i = 0; i < data.questions.length; i++)
+    for (let i = 0; i < questions.length; i++)
       QuestionForm(i)
     setData({
       ...data,
@@ -407,11 +201,12 @@ const UserDashboard = ({ navigation }) => {
     })
   }
   useEffect(() => {
-    getQuestions()
+    reset()
   }, [])
+
   return (
     <Background>
-      {uploading ? (
+      {reportUploadingStatus ? (
         <Background>
           <Logo />
           <Header>Yükleme İşlemi</Header>
@@ -419,7 +214,7 @@ const UserDashboard = ({ navigation }) => {
             Veriler veritabanına yükleniyor, lütfen yükleme bitene kadar bekleyin...
           </Paragraph>
           <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Paragraph>{data.uploadCounter}/{data.assetCounter.length} yükleniyor...</Paragraph>
+          <Paragraph>{uploadCounter}/{assetCounter} yükleniyor...</Paragraph>
         </Background>
       ) : (
         <Background>
@@ -429,7 +224,7 @@ const UserDashboard = ({ navigation }) => {
             Raporlama
       </Paragraph>
           {data.forms}
-          <Button mode="contained" style={{ marginTop: "4%" }} onPress={sendReport}>
+          <Button mode="contained" style={{ marginTop: "4%" }} onPress={() => { sendReport(answerCounter) }}>
             Cevapları Gönder
       </Button>
           <Button mode="outlined" style={{ backgroundColor: "red" }} onPress={logoutUser}>
@@ -443,9 +238,3 @@ const UserDashboard = ({ navigation }) => {
 }
 
 export default UserDashboard
-
-const styles = StyleSheet.create({
-  progressBarContainer: {
-    marginTop: 20
-  },
-})
